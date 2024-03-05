@@ -22,6 +22,7 @@ var (
 	awsProfile        = flag.String("aws-profile", "", "aws profile to use")
 	awsRegion         = flag.String("aws-region", "", "aws region to use")
 	extractJSONObject = flag.String("json-extract", "", "extract a nested object inside the JSON body")
+	keyProperty       = flag.String("key-property", "", "the key to use as for context in the list")
 )
 
 func Execute() {
@@ -52,6 +53,6 @@ func Execute() {
 
 	sqsClient := sqs.NewFromConfig(sdkConfig)
 
-	ui.RenderUI(sqsClient, *queueUrl, *extractJSONObject)
+	ui.RenderUI(sqsClient, *queueUrl, *extractJSONObject, *keyProperty)
 
 }

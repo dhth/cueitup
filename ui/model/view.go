@@ -27,12 +27,20 @@ func (m model) View() string {
 		valueViewPtr = " 👇"
 	}
 
+	if m.deleteMsgs {
+		mode += " " + deletingMsgsStyle.Render("deleting msgs!")
+	}
+
+	if !m.pollForQueueMsgCount {
+		mode += " " + pollingMsgStyle.Render("not polling for msg count!")
+	}
+
 	if m.persistRecords {
-		mode += " " + persistingStyle.Render("persisting records!")
+		mode += " " + persistingStyle.Render("persisting msgs!")
 	}
 
 	if m.skipRecords {
-		mode += " " + skippingStyle.Render("skipping records!")
+		mode += " " + skippingStyle.Render("skipping msgs!")
 	}
 
 	m.kMsgsList.Title += msgsViewPtr

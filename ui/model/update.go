@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -26,11 +28,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activeView = kMsgsListView
 			return m, nil
 		case "n", " ":
-			return m, FetchMessages(m.sqsClient, m.queueUrl, 1, 0)
+			return m, FetchMessages(m.sqsClient, m.queueUrl, 1, 0, m.extractJSONObject, m.keyProperty)
 		case "N":
-			m.msg = "..."
+			m.msg = " ..."
 			for i := 0; i < 10; i++ {
-				cmds = append(cmds, FetchMessages(m.sqsClient, m.queueUrl, 1, 0))
+				cmds = append(cmds, FetchMessages(m.sqsClient, m.queueUrl, 1, 0, m.extractJSONObject, m.keyProperty))
+			}
+			return m, tea.Batch(cmds...)
+		case "}":
+			m.msg = " ..."
+			for i := 0; i < 100; i++ {
+				cmds = append(cmds, FetchMessages(m.sqsClient, m.queueUrl, 1, 0, m.extractJSONObject, m.keyProperty))
 			}
 			return m, tea.Batch(cmds...)
 		case "?":
@@ -39,6 +47,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.vpFullScreen = true
 			if m.helpSeen < 2 {
 				m.helpSeen += 1
+			}
+			return m, nil
+		case "d":
+			if m.activeView == kMsgsListView {
+				m.deleteMsgs = !m.deleteMsgs
 			}
 			return m, nil
 		case "p":
@@ -52,6 +65,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.persistRecords = false
 			}
 			m.skipRecords = !m.skipRecords
+			return m, nil
+		case "[":
+			m.kMsgsList.CursorUp()
+			m.msgValueVP.SetContent(m.recordValueStore[m.kMsgsList.SelectedItem().FilterValue()])
+		case "]":
+			m.kMsgsList.CursorDown()
+			m.msgValueVP.SetContent(m.recordValueStore[m.kMsgsList.SelectedItem().FilterValue()])
+
+		case "ctrl+p":
+			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
+			if m.pollForQueueMsgCount {
+				return m, tea.Batch(GetQueueMsgCount(m.sqsClient, m.queueUrl), tickEvery(msgCountTickInterval))
+			}
+			return m, nil
+		case "ctrl+r":
+			deleteMsgsFlag := m.deleteMsgs
+			persistMsgsFlag := m.persistRecords
+			m = InitialModel(m.sqsClient, m.queueUrl, m.extractJSONObject, m.keyProperty)
+			m.deleteMsgs = deleteMsgsFlag
+			m.persistRecords = persistMsgsFlag
+			m.msgValueVP.SetContent("")
 			return m, nil
 		case "1":
 			m.msgValueVP.Height = m.terminalHeight - 7
@@ -92,8 +126,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			if m.activeView == kMsgsListView {
-				m.activeView = kMsgMetadataView
-			} else if m.activeView == kMsgMetadataView {
 				m.activeView = kMsgValueView
 			} else if m.activeView == kMsgValueView {
 				m.activeView = kMsgsListView
@@ -103,11 +135,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			if m.activeView == kMsgsListView {
-				m.activeView = kMsgValueView
-			} else if m.activeView == kMsgMetadataView {
 				m.activeView = kMsgsListView
 			} else if m.activeView == kMsgValueView {
-				m.activeView = kMsgMetadataView
+				m.activeView = kMsgsListView
 			}
 		}
 
@@ -155,14 +185,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			switch m.skipRecords {
 			case false:
-				for _, message := range msg.messages {
-					m.kMsgsList.InsertItem(len(m.kMsgsList.Items()), KMsgItem{message: message})
-					cmds = append(cmds, saveRecordValue(&message, m.extractJSONObject))
+				for i, message := range msg.messages {
+					m.kMsgsList.InsertItem(len(m.kMsgsList.Items()),
+						KMsgItem{message: message,
+							messageValue:     msg.messageValues[i],
+							keyPropertyName:  m.keyProperty,
+							keyPropertyValue: msg.keyValues[i],
+						},
+					)
+					if m.deleteMsgs {
+						cmds = append(cmds, DeleteMessages(m.sqsClient, m.queueUrl, msg.messages))
+					}
+					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
 				}
 			}
 		}
 	case KMsgChosenMsg:
 		m.msgValueVP.SetContent(m.recordValueStore[msg.key])
+	case MsgCountTickMsg:
+		cmds = append(cmds, GetQueueMsgCount(m.sqsClient, m.queueUrl))
+		if m.pollForQueueMsgCount {
+			cmds = append(cmds, tickEvery(msgCountTickInterval))
+		}
+		return m, tea.Batch(cmds...)
+	case QueueMsgCountFetchedMsg:
+		if msg.err != nil {
+			m.errorMsg = msg.err.Error()
+		} else {
+			m.kMsgsList.Title = fmt.Sprintf("Messages (%d in queue)", msg.approxMsgCount)
+		}
 	}
 
 	switch m.activeView {
@@ -179,6 +230,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.helpVP, cmd = m.helpVP.Update(msg)
 		cmds = append(cmds, cmd)
 	}
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }

@@ -32,6 +32,10 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("#fb4934"))
 
+	deletingMsgsStyle = baseStyle.Copy().
+				Bold(true).
+				Foreground(lipgloss.Color("#d3869b"))
+
 	skippingStyle = baseStyle.Copy().
 			Bold(true).
 			Foreground(lipgloss.Color("#fabd2f"))
@@ -39,4 +43,8 @@ var (
 	helpMsgStyle = baseStyle.Copy().
 			Bold(true).
 			Foreground(lipgloss.Color("#83a598"))
+
+	pollingMsgStyle = baseStyle.Copy().
+			Bold(true).
+			Foreground(lipgloss.Color("#928374"))
 )

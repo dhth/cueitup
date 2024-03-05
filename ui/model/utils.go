@@ -40,21 +40,46 @@ func getRecordValueJSONFull(message *types.Message) (string, error) {
 	return result, nil
 }
 
-func getRecordValueJSON(message *types.Message, extractKey string) (string, error) {
+func getRecordValueJSON(message *types.Message, extractKey string, keyProperty string) (string, string, error) {
 	if message.Body == nil {
-		return "", nil
+		return "", "", nil
 	}
 
 	var result string
 	var data map[string]interface{}
+	var keyValue string
 	err := json.Unmarshal([]byte(*message.Body), &data)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if data[extractKey] != nil {
 		prettyJSON := pretty.Pretty([]byte(data[extractKey].(string)))
 		result = string(pretty.Color(prettyJSON, nil))
+
+		if keyProperty != "" {
+			var nested map[string]interface{}
+			_ = json.Unmarshal([]byte(data[extractKey].(string)), &nested)
+			if nested[keyProperty] != nil {
+				keyValue = nested[keyProperty].(string)
+			}
+		}
 	}
 
-	return result, nil
+	return result, keyValue, nil
+}
+
+func getMessageData(message *types.Message, extractJSONObject string, keyProperty string) (string, string, error) {
+	var msgValue string
+	var err error
+	var keyValue string
+	if extractJSONObject != "" {
+		msgValue, keyValue, err = getRecordValueJSON(message, extractJSONObject, keyProperty)
+	} else {
+		msgValue, err = getRecordValueJSONFull(message)
+	}
+	if err != nil {
+		return "", "", err
+	} else {
+		return msgValue, keyValue, nil
+	}
 }

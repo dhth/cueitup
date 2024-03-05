@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -23,33 +25,41 @@ const (
 	ProtobufFmt
 )
 
+const msgCountTickInterval = time.Second * 20
+
 type model struct {
-	deserializationFmt  DeserializationFmt
-	sqsClient           *sqs.Client
-	queueUrl            string
-	extractJSONObject   string
-	activeView          stateView
-	lastView            stateView
-	kMsgsList           list.Model
-	helpVP              viewport.Model
-	helpSeen            uint
-	msgMetadataVP       viewport.Model
-	msgValueVP          viewport.Model
-	recordMetadataStore map[string]string
-	recordValueStore    map[string]string
-	skipRecords         bool
-	persistRecords      bool
-	filteredKeys        []string
-	msgMetadataVPReady  bool
-	msgValueVPReady     bool
-	helpVPReady         bool
-	vpFullScreen        bool
-	terminalWidth       int
-	terminalHeight      int
-	msg                 string
-	errorMsg            string
+	deserializationFmt   DeserializationFmt
+	sqsClient            *sqs.Client
+	queueUrl             string
+	extractJSONObject    string
+	keyProperty          string
+	activeView           stateView
+	lastView             stateView
+	pollForQueueMsgCount bool
+	kMsgsList            list.Model
+	helpVP               viewport.Model
+	helpSeen             uint
+	msgMetadataVP        viewport.Model
+	msgValueVP           viewport.Model
+	recordMetadataStore  map[string]string
+	recordValueStore     map[string]string
+	deleteMsgs           bool
+	skipRecords          bool
+	persistRecords       bool
+	filteredKeys         []string
+	msgMetadataVPReady   bool
+	msgValueVPReady      bool
+	helpVPReady          bool
+	vpFullScreen         bool
+	terminalWidth        int
+	terminalHeight       int
+	msg                  string
+	errorMsg             string
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.Batch(
+		GetQueueMsgCount(m.sqsClient, m.queueUrl),
+		tickEvery(msgCountTickInterval),
+	)
 }

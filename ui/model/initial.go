@@ -5,20 +5,23 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 )
 
-func InitialModel(sqsClient *sqs.Client, queueUrl string, extractJSONObject string) model {
+func InitialModel(sqsClient *sqs.Client, queueUrl string, extractJSONObject string, keyProperty string) model {
 
 	var appDelegateKeys = newAppDelegateKeyMap()
 	appDelegate := newAppItemDelegate(appDelegateKeys)
 	jobItems := make([]list.Item, 0)
 
 	m := model{
-		sqsClient:           sqsClient,
-		queueUrl:            queueUrl,
-		extractJSONObject:   extractJSONObject,
-		kMsgsList:           list.New(jobItems, appDelegate, 60, 0),
-		persistRecords:      false,
-		recordMetadataStore: make(map[string]string),
-		recordValueStore:    make(map[string]string),
+		sqsClient:            sqsClient,
+		queueUrl:             queueUrl,
+		extractJSONObject:    extractJSONObject,
+		keyProperty:          keyProperty,
+		pollForQueueMsgCount: true,
+		kMsgsList:            list.New(jobItems, appDelegate, 60, 0),
+		deleteMsgs:           true,
+		persistRecords:       false,
+		recordMetadataStore:  make(map[string]string),
+		recordValueStore:     make(map[string]string),
 	}
 	m.kMsgsList.Title = "Messages"
 	m.kMsgsList.SetFilteringEnabled(false)

@@ -2,6 +2,9 @@ package model
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -9,11 +12,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitTime int32) tea.Cmd {
+func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitTime int32, extractJSONObject string, keyProperty string) tea.Cmd {
 	return func() tea.Msg {
 
 		var messages []types.Message
+		var messagesValues []string
+		var keyValues []string
 		result, err := client.ReceiveMessage(context.TODO(),
+			// WaitTimeSeconds > 0 enables long polling
+			// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html#sqs-long-polling
 			&sqs.ReceiveMessageInput{
 				QueueUrl:            aws.String(queueUrl),
 				MaxNumberOfMessages: maxMessages,
@@ -27,34 +34,94 @@ func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitT
 			}
 		} else {
 			messages = result.Messages
+			for _, message := range messages {
+				msgValue, keyValue, _ := getMessageData(&message, extractJSONObject, keyProperty)
+				messagesValues = append(messagesValues, msgValue)
+				keyValues = append(keyValues, keyValue)
+			}
 		}
 
 		return KMsgFetchedMsg{
-			messages: messages,
-			err:      nil,
+			messages:      messages,
+			messageValues: messagesValues,
+			keyValues:     keyValues,
+			err:           nil,
 		}
 	}
 }
 
-func saveRecordValue(message *types.Message, extractJSONObject string) tea.Cmd {
+func DeleteMessages(client *sqs.Client, queueUrl string, messages []types.Message) tea.Cmd {
 	return func() tea.Msg {
-		var msgValue string
-		var err error
-		if extractJSONObject != "" {
-			msgValue, err = getRecordValueJSON(message, extractJSONObject)
-		} else {
-			msgValue, err = getRecordValueJSONFull(message)
+
+		entries := make([]types.DeleteMessageBatchRequestEntry, len(messages))
+		for msgIndex := range messages {
+			entries[msgIndex].Id = aws.String(fmt.Sprintf("%v", msgIndex))
+			entries[msgIndex].ReceiptHandle = messages[msgIndex].ReceiptHandle
 		}
+		_, err := client.DeleteMessageBatch(context.TODO(),
+			&sqs.DeleteMessageBatchInput{
+				Entries:  entries,
+				QueueUrl: aws.String(queueUrl),
+			})
 		if err != nil {
-			return KMsgValueReadyMsg{err: err}
-		} else {
-			return KMsgValueReadyMsg{storeKey: *message.MessageId, record: message, msgValue: msgValue}
+			return SQSMsgsDeletedMsg{
+				err: err,
+			}
+		}
+
+		return SQSMsgsDeletedMsg{}
+	}
+}
+
+func GetQueueMsgCount(client *sqs.Client, queueUrl string) tea.Cmd {
+	return func() tea.Msg {
+
+		approxMsgCountType := types.QueueAttributeNameApproximateNumberOfMessages
+		attribute, err := client.GetQueueAttributes(context.TODO(),
+			&sqs.GetQueueAttributesInput{
+				QueueUrl:       aws.String(queueUrl),
+				AttributeNames: []types.QueueAttributeName{approxMsgCountType},
+			})
+
+		countStr := attribute.Attributes[string(approxMsgCountType)]
+		count, err := strconv.Atoi(countStr)
+		if err != nil {
+			return QueueMsgCountFetchedMsg{
+				approxMsgCount: -1,
+				err:            err,
+			}
+		}
+		return QueueMsgCountFetchedMsg{
+			approxMsgCount: count,
 		}
 	}
 }
+
+// func saveRecordValue(message *types.Message, extractJSONObject string) tea.Cmd {
+// 	return func() tea.Msg {
+// 		var msgValue string
+// 		var err error
+// 		if extractJSONObject != "" {
+// 			msgValue, err = getRecordValueJSON(message, extractJSONObject)
+// 		} else {
+// 			msgValue, err = getRecordValueJSONFull(message)
+// 		}
+// 		if err != nil {
+// 			return KMsgValueReadyMsg{err: err}
+// 		} else {
+// 			return KMsgValueReadyMsg{storeKey: *message.MessageId, record: message, msgValue: msgValue}
+// 		}
+// 	}
+// }
 
 func showItemDetails(key string) tea.Cmd {
 	return func() tea.Msg {
 		return KMsgChosenMsg{key}
 	}
+}
+
+func tickEvery(interval time.Duration) tea.Cmd {
+	return tea.Tick(interval, func(time.Time) tea.Msg {
+		return MsgCountTickMsg{}
+	})
 }

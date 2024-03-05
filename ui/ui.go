@@ -10,7 +10,7 @@ import (
 	"github.com/dhth/cueitup/ui/model"
 )
 
-func RenderUI(sqsClient *sqs.Client, queueUrl string, extractJSONObject string) {
+func RenderUI(sqsClient *sqs.Client, queueUrl string, extractJSONObject string, keyProperty string) {
 
 	if len(os.Getenv("DEBUG")) > 0 {
 		f, err := tea.LogToFile("debug.log", "debug")
@@ -21,7 +21,7 @@ func RenderUI(sqsClient *sqs.Client, queueUrl string, extractJSONObject string) 
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(model.InitialModel(sqsClient, queueUrl, extractJSONObject), tea.WithAltScreen())
+	p := tea.NewProgram(model.InitialModel(sqsClient, queueUrl, extractJSONObject, keyProperty), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Something went wrong %s", err)
 	}
