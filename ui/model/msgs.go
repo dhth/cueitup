@@ -5,6 +5,7 @@ import (
 )
 
 type MsgCountTickMsg struct{}
+type HideHelpMsg struct{}
 
 type KMsgFetchedMsg struct {
 	messages      []types.Message

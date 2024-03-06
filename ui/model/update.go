@@ -77,9 +77,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.lastView = m.activeView
 			m.activeView = helpView
 			m.vpFullScreen = true
-			if m.helpSeen < 2 {
-				m.helpSeen += 1
-			}
 			return m, nil
 		case "d":
 			if m.activeView == kMsgsListView {
@@ -221,6 +218,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.contextSearchValues = msg.values
 		m.contextSearchInput.SetValue("")
 		m.filterMessages = true
+
+	case HideHelpMsg:
+		m.showHelpIndicator = false
 
 	case KMsgFetchedMsg:
 		if msg.err != nil {

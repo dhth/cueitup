@@ -45,7 +45,7 @@ type model struct {
 	pollForQueueMsgCount bool
 	kMsgsList            list.Model
 	helpVP               viewport.Model
-	helpSeen             uint
+	showHelpIndicator    bool
 	msgMetadataVP        viewport.Model
 	msgValueVP           viewport.Model
 	recordMetadataStore  map[string]string
@@ -73,5 +73,6 @@ func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		GetQueueMsgCount(m.sqsClient, m.queueUrl),
 		tickEvery(msgCountTickInterval),
+		hideHelp(time.Second*30),
 	)
 }

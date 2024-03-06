@@ -151,3 +151,9 @@ func tickEvery(interval time.Duration) tea.Cmd {
 		return MsgCountTickMsg{}
 	})
 }
+
+func hideHelp(interval time.Duration) tea.Cmd {
+	return tea.Tick(interval, func(time.Time) tea.Msg {
+		return HideHelpMsg{}
+	})
+}

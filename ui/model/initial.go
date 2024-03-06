@@ -44,6 +44,7 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		recordValueStore:     make(map[string]string),
 		persistDir:           persistDir,
 		contextSearchInput:   ti,
+		showHelpIndicator:    true,
 		debugMode:            dbg,
 	}
 	m.kMsgsList.Title = "Messages"
