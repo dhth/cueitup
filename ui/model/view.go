@@ -27,8 +27,8 @@ func (m model) View() string {
 		valueViewPtr = " 👇"
 	}
 
-	if m.deleteMsgs {
-		mode += " " + deletingMsgsStyle.Render("deleting msgs!")
+	if !m.deleteMsgs {
+		mode += " " + deletingMsgsStyle.Render("not deleting msgs!")
 	}
 
 	if !m.pollForQueueMsgCount {

@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -28,17 +27,38 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activeView = kMsgsListView
 			return m, nil
 		case "n", " ":
-			return m, FetchMessages(m.sqsClient, m.queueUrl, 1, 0, m.extractJSONObject, m.keyProperty)
+			m.msg = " ..."
+			return m,
+				FetchMessages(m.sqsClient,
+					m.queueUrl,
+					1,
+					0,
+					m.msgConsumptionConf,
+				)
 		case "N":
 			m.msg = " ..."
 			for i := 0; i < 10; i++ {
-				cmds = append(cmds, FetchMessages(m.sqsClient, m.queueUrl, 1, 0, m.extractJSONObject, m.keyProperty))
+				cmds = append(cmds,
+					FetchMessages(m.sqsClient,
+						m.queueUrl,
+						1,
+						0,
+						m.msgConsumptionConf,
+					),
+				)
 			}
 			return m, tea.Batch(cmds...)
 		case "}":
 			m.msg = " ..."
 			for i := 0; i < 100; i++ {
-				cmds = append(cmds, FetchMessages(m.sqsClient, m.queueUrl, 1, 0, m.extractJSONObject, m.keyProperty))
+				cmds = append(cmds,
+					FetchMessages(m.sqsClient,
+						m.queueUrl,
+						1,
+						0,
+						m.msgConsumptionConf,
+					),
+				)
 			}
 			return m, tea.Batch(cmds...)
 		case "?":
@@ -76,13 +96,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
 			if m.pollForQueueMsgCount {
-				return m, tea.Batch(GetQueueMsgCount(m.sqsClient, m.queueUrl), tickEvery(msgCountTickInterval))
+				return m,
+					tea.Batch(GetQueueMsgCount(m.sqsClient,
+						m.queueUrl),
+						tickEvery(msgCountTickInterval),
+					)
 			}
 			return m, nil
 		case "ctrl+r":
 			deleteMsgsFlag := m.deleteMsgs
 			persistMsgsFlag := m.persistRecords
-			m = InitialModel(m.sqsClient, m.queueUrl, m.extractJSONObject, m.keyProperty)
+			m = InitialModel(m.sqsClient, m.queueUrl, m.msgConsumptionConf)
 			m.deleteMsgs = deleteMsgsFlag
 			m.persistRecords = persistMsgsFlag
 			m.msgValueVP.SetContent("")
@@ -188,13 +212,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				for i, message := range msg.messages {
 					m.kMsgsList.InsertItem(len(m.kMsgsList.Items()),
 						KMsgItem{message: message,
-							messageValue:     msg.messageValues[i],
-							keyPropertyName:  m.keyProperty,
-							keyPropertyValue: msg.keyValues[i],
+							messageValue:    msg.messageValues[i],
+							contextKeyName:  m.msgConsumptionConf.ContextKey,
+							contextKeyValue: msg.keyValues[i],
 						},
 					)
+					if m.persistRecords {
+						filePath := fmt.Sprintf("%s/%s.md", m.persistDir, *message.MessageId)
+						cmds = append(cmds,
+							saveRecordValueToDisk(
+								filePath,
+								*message.Body,
+								m.msgConsumptionConf.Format,
+							),
+						)
+					}
 					if m.deleteMsgs {
-						cmds = append(cmds, DeleteMessages(m.sqsClient, m.queueUrl, msg.messages))
+						cmds = append(cmds,
+							DeleteMessages(m.sqsClient,
+								m.queueUrl,
+								msg.messages),
+						)
 					}
 					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
 				}

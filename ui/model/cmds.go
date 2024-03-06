@@ -3,6 +3,8 @@ package model
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitTime int32, extractJSONObject string, keyProperty string) tea.Cmd {
+func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitTime int32, msgConsumptionConf MsgConsumptionConf) tea.Cmd {
 	return func() tea.Msg {
 
 		var messages []types.Message
@@ -35,7 +37,7 @@ func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitT
 		} else {
 			messages = result.Messages
 			for _, message := range messages {
-				msgValue, keyValue, _ := getMessageData(&message, extractJSONObject, keyProperty)
+				msgValue, keyValue, _ := getMessageData(&message, msgConsumptionConf)
 				messagesValues = append(messagesValues, msgValue)
 				keyValues = append(keyValues, keyValue)
 			}
@@ -83,6 +85,13 @@ func GetQueueMsgCount(client *sqs.Client, queueUrl string) tea.Cmd {
 				AttributeNames: []types.QueueAttributeName{approxMsgCountType},
 			})
 
+		if err != nil {
+			return QueueMsgCountFetchedMsg{
+				approxMsgCount: -1,
+				err:            err,
+			}
+		}
+
 		countStr := attribute.Attributes[string(approxMsgCountType)]
 		count, err := strconv.Atoi(countStr)
 		if err != nil {
@@ -97,22 +106,27 @@ func GetQueueMsgCount(client *sqs.Client, queueUrl string) tea.Cmd {
 	}
 }
 
-// func saveRecordValue(message *types.Message, extractJSONObject string) tea.Cmd {
-// 	return func() tea.Msg {
-// 		var msgValue string
-// 		var err error
-// 		if extractJSONObject != "" {
-// 			msgValue, err = getRecordValueJSON(message, extractJSONObject)
-// 		} else {
-// 			msgValue, err = getRecordValueJSONFull(message)
-// 		}
-// 		if err != nil {
-// 			return KMsgValueReadyMsg{err: err}
-// 		} else {
-// 			return KMsgValueReadyMsg{storeKey: *message.MessageId, record: message, msgValue: msgValue}
-// 		}
-// 	}
-// }
+func saveRecordValueToDisk(filePath string, msgValue string, msgFmt MsgFmt) tea.Cmd {
+	return func() tea.Msg {
+		dir := filepath.Dir(filePath)
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			return RecordSavedToDiskMsg{err: err}
+		}
+		var data string
+		switch msgFmt {
+		case JsonFmt:
+			data = fmt.Sprintf("```json\n%s\n```", msgValue)
+		case PlainTxtFmt:
+			data = msgValue
+		}
+		err = os.WriteFile(filePath, []byte(data), 0644)
+		if err != nil {
+			return RecordSavedToDiskMsg{err: err}
+		}
+		return RecordSavedToDiskMsg{path: filePath}
+	}
+}
 
 func showItemDetails(key string) tea.Cmd {
 	return func() tea.Msg {

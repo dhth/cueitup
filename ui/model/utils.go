@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -40,42 +41,69 @@ func getRecordValueJSONFull(message *types.Message) (string, error) {
 	return result, nil
 }
 
-func getRecordValueJSON(message *types.Message, extractKey string, keyProperty string) (string, string, error) {
+func getRecordValueJSONNested(message *types.Message, extractKey string, contextKey string) (string, string, error) {
 	if message.Body == nil {
-		return "", "", nil
+		return "", "", errors.New("body is nil")
 	}
 
-	var result string
 	var data map[string]interface{}
-	var keyValue string
 	err := json.Unmarshal([]byte(*message.Body), &data)
 	if err != nil {
 		return "", "", err
 	}
-	if data[extractKey] != nil {
-		prettyJSON := pretty.Pretty([]byte(data[extractKey].(string)))
-		result = string(pretty.Color(prettyJSON, nil))
 
-		if keyProperty != "" {
-			var nested map[string]interface{}
-			_ = json.Unmarshal([]byte(data[extractKey].(string)), &nested)
-			if nested[keyProperty] != nil {
-				keyValue = nested[keyProperty].(string)
-			}
-		}
+	subsetKey, ok := data[extractKey]
+	if !ok {
+		return "", "", errors.New("nested object couln't be accessed")
 	}
 
-	return result, keyValue, nil
+	var nestedData map[string]interface{}
+	switch n := subsetKey.(type) {
+	case map[string]interface{}:
+		// If it's a JSON object, directly access the nested key
+		nestedData = n
+	case string:
+		// May be stringified JSON; attempt to convert it to JSON
+		if err := json.Unmarshal([]byte(n), &nestedData); err != nil {
+			return "", "", err
+		}
+	default:
+		return "", "", errors.New("Unexpected type")
+	}
+
+	nestedBytes, err := json.Marshal(nestedData)
+	if err != nil {
+		return "", "", err
+	}
+	nestedPretty := pretty.Pretty(nestedBytes)
+	nestedColored := string(pretty.Color(nestedPretty, nil))
+
+	contextualValue, ok := nestedData[contextKey]
+	if !ok {
+		return string(nestedColored), "", nil
+	}
+
+	return string(nestedColored), contextualValue.(string), nil
 }
 
-func getMessageData(message *types.Message, extractJSONObject string, keyProperty string) (string, string, error) {
-	var msgValue string
+func getMessageData(message *types.Message, msgConsumptionConf MsgConsumptionConf) (string, string, error) {
+	var msgValue, keyValue string
 	var err error
-	var keyValue string
-	if extractJSONObject != "" {
-		msgValue, keyValue, err = getRecordValueJSON(message, extractJSONObject, keyProperty)
-	} else {
-		msgValue, err = getRecordValueJSONFull(message)
+
+	switch msgConsumptionConf.Format {
+	case JsonFmt:
+		if msgConsumptionConf.SubsetKey != "" {
+			msgValue,
+				keyValue,
+				err = getRecordValueJSONNested(message,
+				msgConsumptionConf.SubsetKey,
+				msgConsumptionConf.ContextKey,
+			)
+		} else {
+			msgValue, err = getRecordValueJSONFull(message)
+		}
+	case PlainTxtFmt:
+		msgValue = *message.Body
 	}
 	if err != nil {
 		return "", "", err

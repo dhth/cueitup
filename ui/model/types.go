@@ -12,12 +12,12 @@ type delegateKeyMap struct {
 }
 
 type KMsgItem struct {
-	message          types.Message
-	messageValue     string
-	msgMetadata      string
-	msgValue         string
-	keyPropertyName  string
-	keyPropertyValue string
+	message         types.Message
+	messageValue    string
+	msgMetadata     string
+	msgValue        string
+	contextKeyName  string
+	contextKeyValue string
 }
 
 func (item KMsgItem) Title() string {
@@ -25,8 +25,8 @@ func (item KMsgItem) Title() string {
 }
 
 func (item KMsgItem) Description() string {
-	if item.keyPropertyValue != "" {
-		return fmt.Sprintf("%s: %s", RightPadTrim(item.keyPropertyName, 10), RightPadTrim(item.keyPropertyValue, 40))
+	if item.contextKeyValue != "" {
+		return fmt.Sprintf("%s: %s", RightPadTrim(item.contextKeyName, 10), RightPadTrim(item.contextKeyValue, 40))
 	}
 	return ""
 }

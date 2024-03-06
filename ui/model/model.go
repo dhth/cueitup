@@ -18,21 +18,26 @@ const (
 	helpView
 )
 
-type DeserializationFmt uint
+type MsgFmt uint
 
 const (
-	JsonFmt DeserializationFmt = iota
-	ProtobufFmt
+	JsonFmt MsgFmt = iota
+	PlainTxtFmt
 )
 
-const msgCountTickInterval = time.Second * 20
+const msgCountTickInterval = time.Second * 3
+
+type MsgConsumptionConf struct {
+	Format     MsgFmt
+	SubsetKey  string
+	ContextKey string
+}
 
 type model struct {
-	deserializationFmt   DeserializationFmt
+	deserializationFmt   MsgFmt
 	sqsClient            *sqs.Client
 	queueUrl             string
-	extractJSONObject    string
-	keyProperty          string
+	msgConsumptionConf   MsgConsumptionConf
 	activeView           stateView
 	lastView             stateView
 	pollForQueueMsgCount bool
@@ -46,6 +51,7 @@ type model struct {
 	deleteMsgs           bool
 	skipRecords          bool
 	persistRecords       bool
+	persistDir           string
 	filteredKeys         []string
 	msgMetadataVPReady   bool
 	msgValueVPReady      bool
