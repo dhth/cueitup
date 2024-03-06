@@ -3,3 +3,5 @@ cueitup
 records
 debug.log
 messages
+cosign.key
+cosign.pub
