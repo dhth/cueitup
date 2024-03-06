@@ -26,6 +26,10 @@ type KMsgChosenMsg struct {
 	key string
 }
 
+type ContextSearchValuesSetMsg struct {
+	values []string
+}
+
 type RecordSavedToDiskMsg struct {
 	path string
 	err  error

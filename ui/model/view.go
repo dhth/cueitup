@@ -17,6 +17,12 @@ func (m model) View() string {
 	var headerViewPtr string
 	var valueViewPtr string
 	var mode string
+	var statusBar string
+	var debugMsg string
+
+	if m.msg != "" {
+		statusBar = Trim(m.msg, 120)
+	}
 
 	switch m.activeView {
 	case kMsgsListView:
@@ -25,6 +31,8 @@ func (m model) View() string {
 		headerViewPtr = " 👇"
 	case kMsgValueView:
 		valueViewPtr = " 👇"
+	case contextualSearchView:
+		statusBar = m.contextSearchInput.View()
 	}
 
 	if !m.deleteMsgs {
@@ -43,12 +51,12 @@ func (m model) View() string {
 		mode += " " + skippingStyle.Render("skipping msgs!")
 	}
 
+	if m.filterMessages && len(m.contextSearchValues) > 0 {
+		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", m.msgConsumptionConf.ContextKey, m.contextSearchValues))
+	}
+
 	m.kMsgsList.Title += msgsViewPtr
 
-	var statusBar string
-	if m.msg != "" {
-		statusBar = Trim(m.msg, 120)
-	}
 	var errorMsg string
 	if m.errorMsg != "" {
 		errorMsg = " error: " + Trim(m.errorMsg, 120)
@@ -101,8 +109,13 @@ func (m model) View() string {
 		helpMsg = " " + helpMsgStyle.Render("Press ? for help")
 	}
 
-	footerStr := fmt.Sprintf("%s%s%s%s",
+	if m.debugMode {
+		debugMsg += fmt.Sprintf(" %v", m.activeView)
+	}
+
+	footerStr := fmt.Sprintf("%s%s%s%s%s",
 		modeStyle.Render("cueitup"),
+		debugMsg,
 		helpMsg,
 		mode,
 		errorMsg,

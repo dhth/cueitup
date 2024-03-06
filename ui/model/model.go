@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -16,6 +17,7 @@ const (
 	kMsgMetadataView
 	kMsgValueView
 	helpView
+	contextualSearchView
 )
 
 type MsgFmt uint
@@ -48,6 +50,9 @@ type model struct {
 	msgValueVP           viewport.Model
 	recordMetadataStore  map[string]string
 	recordValueStore     map[string]string
+	contextSearchInput   textinput.Model
+	contextSearchValues  []string
+	filterMessages       bool
 	deleteMsgs           bool
 	skipRecords          bool
 	persistRecords       bool
@@ -61,6 +66,7 @@ type model struct {
 	terminalHeight       int
 	msg                  string
 	errorMsg             string
+	debugMode            bool
 }
 
 func (m model) Init() tea.Cmd {

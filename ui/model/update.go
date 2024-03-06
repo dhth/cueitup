@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -13,6 +15,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	m.msg = ""
 	m.errorMsg = ""
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			if m.activeView == contextualSearchView {
+				m.activeView = m.lastView
+				return m, tea.Batch(cmds...)
+			}
+		case "enter":
+			if m.activeView == contextualSearchView {
+				m.activeView = m.lastView
+				if len(m.contextSearchInput.Value()) > 0 {
+					return m, setContextSearchValues(m.contextSearchInput.Value())
+				}
+			}
+		}
+	}
+
+	switch m.activeView {
+	case contextualSearchView:
+		m.contextSearchInput, cmd = m.contextSearchInput.Update(msg)
+		cmds = append(cmds, cmd)
+		return m, tea.Batch(cmds...)
+	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -29,35 +56,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "n", " ":
 			m.msg = " ..."
 			return m,
-				FetchMessages(m.sqsClient,
-					m.queueUrl,
-					1,
-					0,
-					m.msgConsumptionConf,
-				)
+				m.FetchMessages(1, 0)
 		case "N":
 			m.msg = " ..."
 			for i := 0; i < 10; i++ {
 				cmds = append(cmds,
-					FetchMessages(m.sqsClient,
-						m.queueUrl,
-						1,
-						0,
-						m.msgConsumptionConf,
-					),
+					m.FetchMessages(1, 0),
 				)
 			}
 			return m, tea.Batch(cmds...)
 		case "}":
 			m.msg = " ..."
-			for i := 0; i < 100; i++ {
+			for i := 0; i < 20; i++ {
 				cmds = append(cmds,
-					FetchMessages(m.sqsClient,
-						m.queueUrl,
-						1,
-						0,
-						m.msgConsumptionConf,
-					),
+					m.FetchMessages(5, 0),
 				)
 			}
 			return m, tea.Batch(cmds...)
@@ -102,21 +114,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						tickEvery(msgCountTickInterval),
 					)
 			}
-			return m, nil
+		case "ctrl+s":
+			if m.activeView != contextualSearchView {
+				m.lastView = m.activeView
+				m.activeView = contextualSearchView
+			}
+			return m, tea.Batch(cmds...)
+		case "ctrl+f":
+			if len(m.contextSearchValues) > 0 {
+				m.filterMessages = !m.filterMessages
+			}
 		case "ctrl+r":
-			deleteMsgsFlag := m.deleteMsgs
-			persistMsgsFlag := m.persistRecords
-			m = InitialModel(m.sqsClient, m.queueUrl, m.msgConsumptionConf)
-			m.deleteMsgs = deleteMsgsFlag
-			m.persistRecords = persistMsgsFlag
+			m.kMsgsList.SetItems(make([]list.Item, 0))
 			m.msgValueVP.SetContent("")
-			return m, nil
 		case "1":
 			m.msgValueVP.Height = m.terminalHeight - 7
 			m.vpFullScreen = true
 			m.lastView = kMsgsListView
 			m.activeView = kMsgValueView
-			return m, nil
 		case "f":
 			switch m.activeView {
 			case kMsgMetadataView:
@@ -143,7 +158,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.vpFullScreen = false
 					m.activeView = m.lastView
 				}
-				return m, nil
 			}
 		case "tab":
 			if m.vpFullScreen {
@@ -203,13 +217,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, tea.Batch(cmds...)
 
+	case ContextSearchValuesSetMsg:
+		m.contextSearchValues = msg.values
+		m.contextSearchInput.SetValue("")
+		m.filterMessages = true
+
 	case KMsgFetchedMsg:
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
 			switch m.skipRecords {
 			case false:
+				vPresenceMap := make(map[string]bool)
+				if m.filterMessages && len(m.contextSearchValues) > 0 {
+					for _, p := range m.contextSearchValues {
+						vPresenceMap[p] = true
+					}
+				}
 				for i, message := range msg.messages {
+
+					// only save/persist values that are requested to be filtered
+					if m.filterMessages && !(msg.keyValues[i] != "" && vPresenceMap[msg.keyValues[i]]) {
+						continue
+					}
+
 					m.kMsgsList.InsertItem(len(m.kMsgsList.Items()),
 						KMsgItem{message: message,
 							messageValue:    msg.messageValues[i],
@@ -227,14 +258,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							),
 						)
 					}
-					if m.deleteMsgs {
-						cmds = append(cmds,
-							DeleteMessages(m.sqsClient,
-								m.queueUrl,
-								msg.messages),
-						)
-					}
 					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
+				}
+				if m.deleteMsgs {
+					cmds = append(cmds,
+						DeleteMessages(m.sqsClient,
+							m.queueUrl,
+							msg.messages),
+					)
 				}
 			}
 		}
@@ -268,7 +299,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.helpVP, cmd = m.helpVP.Update(msg)
 		cmds = append(cmds, cmd)
 	}
-	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }

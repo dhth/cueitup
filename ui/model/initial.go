@@ -2,11 +2,13 @@ package model
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 )
 
 func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf MsgConsumptionConf) model {
@@ -21,6 +23,17 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 	timeString := currentTime.Format("2006-01-02-15-04-05")
 	persistDir := fmt.Sprintf("messages/%s/%s", queueName, timeString)
 
+	ti := textinput.New()
+	ti.Prompt = fmt.Sprintf("Filter messages where %s in > ", msgConsumptionConf.ContextKey)
+	ti.Focus()
+	ti.CharLimit = 100
+	ti.Width = 100
+
+	var dbg bool
+	if len(os.Getenv("DEBUG")) > 0 {
+		dbg = true
+	}
+
 	m := model{
 		sqsClient:            sqsClient,
 		queueUrl:             queueUrl,
@@ -30,6 +43,8 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		recordMetadataStore:  make(map[string]string),
 		recordValueStore:     make(map[string]string),
 		persistDir:           persistDir,
+		contextSearchInput:   ti,
+		debugMode:            dbg,
 	}
 	m.kMsgsList.Title = "Messages"
 	m.kMsgsList.SetFilteringEnabled(false)

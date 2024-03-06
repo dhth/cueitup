@@ -32,5 +32,8 @@ func (item KMsgItem) Description() string {
 }
 
 func (item KMsgItem) FilterValue() string {
+	if item.contextKeyValue != "" {
+		return item.contextKeyValue
+	}
 	return string(*item.message.MessageId)
 }
