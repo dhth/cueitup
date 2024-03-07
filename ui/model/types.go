@@ -21,12 +21,12 @@ type KMsgItem struct {
 }
 
 func (item KMsgItem) Title() string {
-	return fmt.Sprintf("%s: %s", RightPadTrim("msgId", 10), RightPadTrim(*item.message.MessageId, 40))
+	return RightPadTrim(fmt.Sprintf("%s: %s", RightPadTrim("msgId", 10), *item.message.MessageId), listWidth)
 }
 
 func (item KMsgItem) Description() string {
 	if item.contextKeyValue != "" {
-		return fmt.Sprintf("%s: %s", RightPadTrim(item.contextKeyName, 10), RightPadTrim(item.contextKeyValue, 40))
+		return RightPadTrim(fmt.Sprintf("%s: %s", RightPadTrim(item.contextKeyName, 10), item.contextKeyValue), listWidth)
 	}
 	return ""
 }

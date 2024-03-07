@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,17 +15,17 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitTime int32, msgConsumptionConf MsgConsumptionConf) tea.Cmd {
+func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 	return func() tea.Msg {
 
 		var messages []types.Message
 		var messagesValues []string
 		var keyValues []string
-		result, err := client.ReceiveMessage(context.TODO(),
+		result, err := m.sqsClient.ReceiveMessage(context.TODO(),
 			// WaitTimeSeconds > 0 enables long polling
 			// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html#sqs-long-polling
 			&sqs.ReceiveMessageInput{
-				QueueUrl:            aws.String(queueUrl),
+				QueueUrl:            aws.String(m.queueUrl),
 				MaxNumberOfMessages: maxMessages,
 				WaitTimeSeconds:     waitTime,
 				VisibilityTimeout:   30,
@@ -37,7 +38,7 @@ func FetchMessages(client *sqs.Client, queueUrl string, maxMessages int32, waitT
 		} else {
 			messages = result.Messages
 			for _, message := range messages {
-				msgValue, keyValue, _ := getMessageData(&message, msgConsumptionConf)
+				msgValue, keyValue, _ := getMessageData(&message, m.msgConsumptionConf)
 				messagesValues = append(messagesValues, msgValue)
 				keyValues = append(keyValues, keyValue)
 			}
@@ -128,6 +129,17 @@ func saveRecordValueToDisk(filePath string, msgValue string, msgFmt MsgFmt) tea.
 	}
 }
 
+func setContextSearchValues(userInput string) tea.Cmd {
+	return func() tea.Msg {
+		valuesEls := strings.Split(userInput, ",")
+		var values []string
+		for _, v := range valuesEls {
+			values = append(values, strings.TrimSpace(v))
+		}
+		return ContextSearchValuesSetMsg{values}
+	}
+}
+
 func showItemDetails(key string) tea.Cmd {
 	return func() tea.Msg {
 		return KMsgChosenMsg{key}
@@ -137,5 +149,11 @@ func showItemDetails(key string) tea.Cmd {
 func tickEvery(interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
 		return MsgCountTickMsg{}
+	})
+}
+
+func hideHelp(interval time.Duration) tea.Cmd {
+	return tea.Tick(interval, func(time.Time) tea.Msg {
+		return HideHelpMsg{}
 	})
 }

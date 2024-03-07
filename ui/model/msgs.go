@@ -5,6 +5,7 @@ import (
 )
 
 type MsgCountTickMsg struct{}
+type HideHelpMsg struct{}
 
 type KMsgFetchedMsg struct {
 	messages      []types.Message
@@ -24,6 +25,10 @@ type SQSMsgsDeletedMsg struct {
 
 type KMsgChosenMsg struct {
 	key string
+}
+
+type ContextSearchValuesSetMsg struct {
+	values []string
 }
 
 type RecordSavedToDiskMsg struct {
