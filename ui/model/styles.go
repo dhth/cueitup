@@ -10,8 +10,8 @@ var (
 
 	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
 
-	stackListStyle = baseListStyle.Copy().Width(listWidth + 15)
-	viewPortStyle  = baseListStyle.Copy().Width(150)
+	stackListStyle = baseListStyle.Copy().Width(listWidth+5).Border(lipgloss.NormalBorder(), false, true, false, false).BorderForeground(lipgloss.Color("#3c3836"))
+	viewPortStyle  = baseListStyle.Copy().Width(150).PaddingLeft(4)
 
 	modeStyle = baseStyle.Copy().
 			Align(lipgloss.Center).

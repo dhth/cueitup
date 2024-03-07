@@ -39,7 +39,7 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		queueUrl:             queueUrl,
 		msgConsumptionConf:   msgConsumptionConf,
 		pollForQueueMsgCount: true,
-		kMsgsList:            list.New(jobItems, appDelegate, 60, 0),
+		kMsgsList:            list.New(jobItems, appDelegate, listWidth+10, 0),
 		recordMetadataStore:  make(map[string]string),
 		recordValueStore:     make(map[string]string),
 		persistDir:           persistDir,
@@ -48,6 +48,7 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		debugMode:            dbg,
 	}
 	m.kMsgsList.Title = "Messages"
+	m.kMsgsList.SetStatusBarItemName("message", "messages")
 	m.kMsgsList.SetFilteringEnabled(false)
 	m.kMsgsList.SetShowHelp(false)
 
