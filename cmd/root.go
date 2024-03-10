@@ -28,6 +28,12 @@ var (
 )
 
 func Execute() {
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Inspect messages in an AWS SQS queue in a simple and deliberate manner.\n\nFlags:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\n------\n%s", model.HelpText)
+	}
 	flag.Parse()
 
 	if *queueUrl == "" {

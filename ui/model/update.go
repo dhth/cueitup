@@ -2,10 +2,12 @@ package model
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tidwall/pretty"
 )
 
 const useHighPerformanceRenderer = false
@@ -203,7 +205,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(120, m.terminalHeight-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
-			m.helpVP.SetContent(helpText)
+			m.helpVP.SetContent(HelpText)
 			m.helpVPReady = true
 		}
 	case KMsgValueReadyMsg:
@@ -248,17 +250,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							contextKeyValue: msg.keyValues[i],
 						},
 					)
+					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
 					if m.persistRecords {
-						filePath := fmt.Sprintf("%s/%s.md", m.persistDir, *message.MessageId)
+						prefix := time.Now().Unix()
+						filePath := fmt.Sprintf("%s/%d-%s.md", m.persistDir, prefix, *message.MessageId)
 						cmds = append(cmds,
 							saveRecordValueToDisk(
 								filePath,
-								*message.Body,
+								msg.messageValues[i],
 								m.msgConsumptionConf.Format,
 							),
 						)
 					}
-					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
 				}
 				if m.deleteMsgs {
 					cmds = append(cmds,
@@ -270,7 +273,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case KMsgChosenMsg:
-		m.msgValueVP.SetContent(m.recordValueStore[msg.key])
+		switch m.deserializationFmt {
+		case JsonFmt:
+			result := string(pretty.Color([]byte(m.recordValueStore[msg.key]), nil))
+			m.msgValueVP.SetContent(result)
+		default:
+			m.msgValueVP.SetContent(m.recordValueStore[msg.key])
+		}
 	case MsgCountTickMsg:
 		cmds = append(cmds, GetQueueMsgCount(m.sqsClient, m.queueUrl))
 		if m.pollForQueueMsgCount {

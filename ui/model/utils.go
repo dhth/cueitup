@@ -34,11 +34,9 @@ func getRecordValueJSONFull(message *types.Message) (string, error) {
 		return "", nil
 	}
 
-	var result string
 	prettyJSON := pretty.Pretty([]byte(*message.Body))
-	result = string(pretty.Color(prettyJSON, nil))
 
-	return result, nil
+	return string(prettyJSON), nil
 }
 
 func getRecordValueJSONNested(message *types.Message, extractKey string, contextKey string) (string, string, error) {
@@ -76,14 +74,13 @@ func getRecordValueJSONNested(message *types.Message, extractKey string, context
 		return "", "", err
 	}
 	nestedPretty := pretty.Pretty(nestedBytes)
-	nestedColored := string(pretty.Color(nestedPretty, nil))
 
 	contextualValue, ok := nestedData[contextKey]
 	if !ok {
-		return string(nestedColored), "", nil
+		return string(nestedPretty), "", nil
 	}
 
-	return string(nestedColored), contextualValue.(string), nil
+	return string(nestedPretty), contextualValue.(string), nil
 }
 
 func getMessageData(message *types.Message, msgConsumptionConf MsgConsumptionConf) (string, string, error) {
