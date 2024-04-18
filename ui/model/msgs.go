@@ -7,7 +7,7 @@ import (
 type MsgCountTickMsg struct{}
 type HideHelpMsg struct{}
 
-type KMsgFetchedMsg struct {
+type SQSMsgFetchedMsg struct {
 	messages      []types.Message
 	messageValues []string
 	keyValues     []string

@@ -31,7 +31,7 @@ func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 				VisibilityTimeout:   30,
 			})
 		if err != nil {
-			return KMsgFetchedMsg{
+			return SQSMsgFetchedMsg{
 				messages: nil,
 				err:      err,
 			}
@@ -44,7 +44,7 @@ func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 			}
 		}
 
-		return KMsgFetchedMsg{
+		return SQSMsgFetchedMsg{
 			messages:      messages,
 			messageValues: messagesValues,
 			keyValues:     keyValues,

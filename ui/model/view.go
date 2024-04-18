@@ -13,7 +13,6 @@ var (
 func (m model) View() string {
 	var content string
 	var footer string
-	var headerViewPtr string
 	var valueViewPtr string
 	var mode string
 	var statusBar string
@@ -27,9 +26,9 @@ func (m model) View() string {
 	msgValVPTitleStyle = msgValueTitleStyle.Copy()
 
 	switch m.activeView {
-	case kMsgsListView:
+	case msgsListView:
 		m.msgsList.Styles.Title.Background(lipgloss.Color(activeHeaderColor))
-	case kMsgValueView:
+	case msgValueView:
 		msgValVPTitleStyle.Background(lipgloss.Color(activeHeaderColor))
 	case contextualSearchView:
 		statusBar = m.contextSearchInput.View()
@@ -60,13 +59,6 @@ func (m model) View() string {
 		errorMsg = " error: " + Trim(m.errorMsg, 120)
 	}
 
-	var msgMetadataVP string
-	if !m.msgValueVPReady {
-		msgMetadataVP = "\n  Initializing..."
-	} else {
-		msgMetadataVP = msgValueVPStyle.Render(fmt.Sprintf("%s%s\n\n%s\n", msgDetailsTitleStyle.Render("Message Metadata"), headerViewPtr, m.msgMetadataVP.View()))
-	}
-
 	var msgValueVP string
 	if !m.msgValueVPReady {
 		msgValueVP = "\n  Initializing..."
@@ -80,22 +72,26 @@ func (m model) View() string {
 		helpVP = helpVPStyle.Render(fmt.Sprintf("  %s\n\n%s\n", helpVPTitleStyle.Render("Help"), m.helpVP.View()))
 	}
 
-	switch m.vpFullScreen {
-	case false:
+	switch m.activeView {
+	case msgsListView:
 		content = lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			msgListStyle.Render(m.msgsList.View()),
 			msgValueVP,
 		)
-	case true:
-		switch m.activeView {
-		case kMsgMetadataView:
-			content = msgMetadataVP
-		case kMsgValueView:
+	case msgValueView:
+		switch m.vpFullScreen {
+		case true:
 			content = msgValueVP
-		case helpView:
-			content = helpVP
+		case false:
+			content = lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				msgListStyle.Render(m.msgsList.View()),
+				msgValueVP,
+			)
 		}
+	case helpView:
+		content = helpVP
 	}
 
 	footerStyle := lipgloss.NewStyle().

@@ -41,7 +41,6 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		msgConsumptionConf:   msgConsumptionConf,
 		pollForQueueMsgCount: true,
 		msgsList:             list.New(jobItems, appDelegate, listWidth+10, 0),
-		recordMetadataStore:  make(map[string]string),
 		recordValueStore:     make(map[string]string),
 		persistDir:           persistDir,
 		contextSearchInput:   ti,
@@ -51,6 +50,7 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 	m.msgsList.Title = "Messages"
 	m.msgsList.SetStatusBarItemName("message", "messages")
 	m.msgsList.SetFilteringEnabled(false)
+	m.msgsList.DisableQuitKeybindings()
 	m.msgsList.SetShowHelp(false)
 	m.msgsList.Styles.Title.Background(lipgloss.Color(listColor))
 	m.msgsList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))

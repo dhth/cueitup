@@ -4,8 +4,8 @@ import "github.com/charmbracelet/lipgloss"
 
 const (
 	defaultBackgroundColor = "#282828"
-	listColor              = "#b8bb26"
-	activeHeaderColor      = "#b8bb26"
+	listColor              = "#fe8019"
+	activeHeaderColor      = "#fe8019"
 	inactivePaneColor      = "#928374"
 	listPaneBorderColor    = "#3c3836"
 	helpMsgColor           = "#83a598"
@@ -27,7 +27,7 @@ var (
 			Border(lipgloss.NormalBorder(), false, true, false, false).
 			BorderForeground(lipgloss.Color(listPaneBorderColor))
 
-	msgValueVPStyle = baseListStyle.Copy().Width(150).PaddingLeft(4)
+	msgValueVPStyle = baseListStyle.Copy().Width(150).PaddingLeft(3)
 
 	helpVPStyle = lipgloss.NewStyle().
 			PaddingTop(1).

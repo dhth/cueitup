@@ -47,14 +47,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			if m.vpFullScreen == false {
+			switch m.activeView {
+			case msgsListView:
 				return m, tea.Quit
+			case msgValueView:
+				m.activeView = msgsListView
+				m.msgValueVP.Width = 120
+			case helpView:
+				m.activeView = m.lastView
 			}
-			m.msgMetadataVP.Height = m.terminalHeight/2 - 8
-			m.msgValueVP.Height = m.terminalHeight - 8
-			m.vpFullScreen = false
-			m.activeView = kMsgsListView
-			return m, nil
 		case "n", " ":
 			m.msg = " ..."
 			return m,
@@ -78,10 +79,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "?":
 			m.lastView = m.activeView
 			m.activeView = helpView
-			m.vpFullScreen = true
 			return m, nil
 		case "d":
-			if m.activeView == kMsgsListView {
+			if m.activeView == msgsListView {
 				m.deleteMsgs = !m.deleteMsgs
 			}
 			return m, nil
@@ -97,15 +97,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.skipRecords = !m.skipRecords
 			return m, nil
-		case "[":
-			m.msgsList.CursorUp()
-			result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
-			m.msgValueVP.SetContent(result)
-		case "]":
-			m.msgsList.CursorDown()
-			result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
-			m.msgValueVP.SetContent(result)
-
+		case "[", "h":
+			if m.activeView == msgValueView {
+				m.msgsList.CursorUp()
+				result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
+				m.msgValueVP.SetContent(result)
+			}
+		case "]", "l":
+			if m.activeView == msgValueView {
+				m.msgsList.CursorDown()
+				result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
+				m.msgValueVP.SetContent(result)
+			}
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
 			if m.pollForQueueMsgCount {
@@ -129,33 +132,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.msgsList.SetItems(make([]list.Item, 0))
 			m.msgValueVP.SetContent("")
 		case "1":
+			m.msgValueVP.Width = m.terminalWidth - 1
 			m.msgValueVP.Height = m.terminalHeight - 7
 			m.vpFullScreen = true
-			m.lastView = kMsgsListView
-			m.activeView = kMsgValueView
+			m.lastView = msgsListView
+			m.activeView = msgValueView
 		case "f":
 			switch m.activeView {
-			case kMsgMetadataView:
-				switch m.vpFullScreen {
-				case false:
-					m.msgMetadataVP.Height = m.terminalHeight - 7
-					m.lastView = kMsgMetadataView
-					m.vpFullScreen = true
-				case true:
-					m.msgMetadataVP.Height = m.terminalHeight/2 - 8
-					m.msgValueVP.Height = m.terminalHeight - 8
-					m.vpFullScreen = false
-					m.activeView = m.lastView
-				}
-			case kMsgValueView:
+			case msgValueView:
 				switch m.vpFullScreen {
 				case false:
 					m.msgValueVP.Height = m.terminalHeight - 7
-					m.lastView = kMsgValueView
+					m.lastView = msgValueView
 					m.vpFullScreen = true
 				case true:
-					m.msgValueVP.Height = m.terminalHeight - 8
-					m.msgMetadataVP.Height = m.terminalHeight/2 - 8
 					m.vpFullScreen = false
 					m.activeView = m.lastView
 				}
@@ -164,39 +154,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.vpFullScreen {
 				return m, nil
 			}
-			if m.activeView == kMsgsListView {
-				m.activeView = kMsgValueView
-			} else if m.activeView == kMsgValueView {
-				m.activeView = kMsgsListView
+			if m.activeView == msgsListView {
+				m.activeView = msgValueView
+			} else if m.activeView == msgValueView {
+				m.activeView = msgsListView
 			}
 		case "shift+tab":
 			if m.vpFullScreen {
 				return m, nil
 			}
-			if m.activeView == kMsgsListView {
-				m.activeView = kMsgsListView
-			} else if m.activeView == kMsgValueView {
-				m.activeView = kMsgsListView
+			if m.activeView == msgsListView {
+				m.activeView = msgsListView
+			} else if m.activeView == msgValueView {
+				m.activeView = msgsListView
 			}
 		}
 
 	case tea.WindowSizeMsg:
 		_, h := msgListStyle.GetFrameSize()
 		m.terminalHeight = msg.Height
-		m.terminalWidth = msg.Width
+		m.terminalWidth = msg.Width - 1
 		m.msgsList.SetHeight(msg.Height - h - 2)
 
-		if !m.msgMetadataVPReady {
-			m.msgMetadataVP = viewport.New(120, m.terminalHeight/2-8)
-			m.msgMetadataVP.HighPerformanceRendering = useHighPerformanceRenderer
-			m.msgMetadataVPReady = true
-		} else {
-			m.msgMetadataVP.Width = 120
-			m.msgMetadataVP.Height = 12
-		}
-
 		if !m.msgValueVPReady {
-			m.msgValueVP = viewport.New(120, m.terminalHeight-8)
+			m.msgValueVP = viewport.New(120, m.terminalHeight-7)
 			m.msgValueVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.msgValueVPReady = true
 		} else {
@@ -205,10 +186,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if !m.helpVPReady {
-			m.helpVP = viewport.New(120, m.terminalHeight-7)
+			m.helpVP = viewport.New(msg.Width, msg.Height-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.helpVP.SetContent(HelpText)
 			m.helpVPReady = true
+		} else {
+			m.helpVP.Width = msg.Width - 1
+			m.helpVP.Height = msg.Height - 7
 		}
 	case KMsgValueReadyMsg:
 		if msg.err != nil {
@@ -226,7 +210,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case HideHelpMsg:
 		m.showHelpIndicator = false
 
-	case KMsgFetchedMsg:
+	case SQSMsgFetchedMsg:
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
@@ -297,13 +281,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.activeView {
-	case kMsgsListView:
+	case msgsListView:
 		m.msgsList, cmd = m.msgsList.Update(msg)
 		cmds = append(cmds, cmd)
-	case kMsgMetadataView:
-		m.msgMetadataVP, cmd = m.msgMetadataVP.Update(msg)
-		cmds = append(cmds, cmd)
-	case kMsgValueView:
+	case msgValueView:
 		m.msgValueVP, cmd = m.msgValueVP.Update(msg)
 		cmds = append(cmds, cmd)
 	case helpView:

@@ -13,9 +13,8 @@ import (
 type stateView uint
 
 const (
-	kMsgsListView stateView = iota
-	kMsgMetadataView
-	kMsgValueView
+	msgsListView stateView = iota
+	msgValueView
 	helpView
 	contextualSearchView
 )
@@ -46,9 +45,7 @@ type model struct {
 	msgsList             list.Model
 	helpVP               viewport.Model
 	showHelpIndicator    bool
-	msgMetadataVP        viewport.Model
 	msgValueVP           viewport.Model
-	recordMetadataStore  map[string]string
 	recordValueStore     map[string]string
 	contextSearchInput   textinput.Model
 	contextSearchValues  []string
@@ -58,7 +55,6 @@ type model struct {
 	persistRecords       bool
 	persistDir           string
 	filteredKeys         []string
-	msgMetadataVPReady   bool
 	msgValueVPReady      bool
 	helpVPReady          bool
 	vpFullScreen         bool
