@@ -99,10 +99,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "[":
 			m.msgsList.CursorUp()
-			m.msgValueVP.SetContent(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()])
+			result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
+			m.msgValueVP.SetContent(result)
 		case "]":
 			m.msgsList.CursorDown()
-			m.msgValueVP.SetContent(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()])
+			result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
+			m.msgValueVP.SetContent(result)
 
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount

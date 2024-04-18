@@ -69,18 +69,17 @@ func getRecordValueJSONNested(message *types.Message, extractKey string, context
 		return "", "", errors.New("Unexpected type")
 	}
 
-	nestedBytes, err := json.Marshal(nestedData)
+	nestedBytes, err := json.MarshalIndent(nestedData, "", "    ")
 	if err != nil {
 		return "", "", err
 	}
-	nestedPretty := pretty.Pretty(nestedBytes)
 
 	contextualValue, ok := nestedData[contextKey]
 	if !ok {
-		return string(nestedPretty), "", nil
+		return string(nestedBytes), "", nil
 	}
 
-	return string(nestedPretty), contextualValue.(string), nil
+	return string(nestedBytes), contextualValue.(string), nil
 }
 
 func getMessageData(message *types.Message, msgConsumptionConf MsgConsumptionConf) (string, string, error) {
