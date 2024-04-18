@@ -98,11 +98,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.skipRecords = !m.skipRecords
 			return m, nil
 		case "[":
-			m.kMsgsList.CursorUp()
-			m.msgValueVP.SetContent(m.recordValueStore[m.kMsgsList.SelectedItem().FilterValue()])
+			m.msgsList.CursorUp()
+			m.msgValueVP.SetContent(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()])
 		case "]":
-			m.kMsgsList.CursorDown()
-			m.msgValueVP.SetContent(m.recordValueStore[m.kMsgsList.SelectedItem().FilterValue()])
+			m.msgsList.CursorDown()
+			m.msgValueVP.SetContent(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()])
 
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
@@ -124,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.filterMessages = !m.filterMessages
 			}
 		case "ctrl+r":
-			m.kMsgsList.SetItems(make([]list.Item, 0))
+			m.msgsList.SetItems(make([]list.Item, 0))
 			m.msgValueVP.SetContent("")
 		case "1":
 			m.msgValueVP.Height = m.terminalHeight - 7
@@ -179,10 +179,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		_, h := stackListStyle.GetFrameSize()
+		_, h := msgListStyle.GetFrameSize()
 		m.terminalHeight = msg.Height
 		m.terminalWidth = msg.Width
-		m.kMsgsList.SetHeight(msg.Height - h - 2)
+		m.msgsList.SetHeight(msg.Height - h - 2)
 
 		if !m.msgMetadataVPReady {
 			m.msgMetadataVP = viewport.New(120, m.terminalHeight/2-8)
@@ -243,7 +243,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						continue
 					}
 
-					m.kMsgsList.InsertItem(len(m.kMsgsList.Items()),
+					m.msgsList.InsertItem(len(m.msgsList.Items()),
 						KMsgItem{message: message,
 							messageValue:    msg.messageValues[i],
 							contextKeyName:  m.msgConsumptionConf.ContextKey,
@@ -290,13 +290,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
-			m.kMsgsList.Title = fmt.Sprintf("Messages (%d in queue)", msg.approxMsgCount)
+			m.msgsList.Title = fmt.Sprintf("Messages (%d in queue)", msg.approxMsgCount)
 		}
 	}
 
 	switch m.activeView {
 	case kMsgsListView:
-		m.kMsgsList, cmd = m.kMsgsList.Update(msg)
+		m.msgsList, cmd = m.msgsList.Update(msg)
 		cmds = append(cmds, cmd)
 	case kMsgMetadataView:
 		m.msgMetadataVP, cmd = m.msgMetadataVP.Update(msg)

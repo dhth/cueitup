@@ -13,24 +13,24 @@ var (
 func (m model) View() string {
 	var content string
 	var footer string
-	var msgsViewPtr string
 	var headerViewPtr string
 	var valueViewPtr string
 	var mode string
 	var statusBar string
 	var debugMsg string
+	var msgValVPTitleStyle lipgloss.Style
 
 	if m.msg != "" {
 		statusBar = Trim(m.msg, 120)
 	}
+	m.msgsList.Styles.Title.Background(lipgloss.Color(inactivePaneColor))
+	msgValVPTitleStyle = msgValueTitleStyle.Copy()
 
 	switch m.activeView {
 	case kMsgsListView:
-		msgsViewPtr = " 👇"
-	case kMsgMetadataView:
-		headerViewPtr = " 👇"
+		m.msgsList.Styles.Title.Background(lipgloss.Color(activeHeaderColor))
 	case kMsgValueView:
-		valueViewPtr = " 👇"
+		msgValVPTitleStyle.Background(lipgloss.Color(activeHeaderColor))
 	case contextualSearchView:
 		statusBar = m.contextSearchInput.View()
 	}
@@ -55,8 +55,6 @@ func (m model) View() string {
 		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", m.msgConsumptionConf.ContextKey, m.contextSearchValues))
 	}
 
-	m.kMsgsList.Title += msgsViewPtr
-
 	var errorMsg string
 	if m.errorMsg != "" {
 		errorMsg = " error: " + Trim(m.errorMsg, 120)
@@ -66,27 +64,27 @@ func (m model) View() string {
 	if !m.msgValueVPReady {
 		msgMetadataVP = "\n  Initializing..."
 	} else {
-		msgMetadataVP = viewPortStyle.Render(fmt.Sprintf("%s%s\n\n%s\n", kMsgMetadataTitleStyle.Render("Message Metadata"), headerViewPtr, m.msgMetadataVP.View()))
+		msgMetadataVP = msgValueVPStyle.Render(fmt.Sprintf("%s%s\n\n%s\n", msgDetailsTitleStyle.Render("Message Metadata"), headerViewPtr, m.msgMetadataVP.View()))
 	}
 
 	var msgValueVP string
 	if !m.msgValueVPReady {
 		msgValueVP = "\n  Initializing..."
 	} else {
-		msgValueVP = viewPortStyle.Render(fmt.Sprintf("%s%s\n\n%s\n", kMsgValueTitleStyle.Render("Message Value"), valueViewPtr, m.msgValueVP.View()))
+		msgValueVP = msgValueVPStyle.Render(fmt.Sprintf("%s%s\n\n%s\n", msgValVPTitleStyle.Render("Message Value"), valueViewPtr, m.msgValueVP.View()))
 	}
 	var helpVP string
 	if !m.helpVPReady {
 		helpVP = "\n  Initializing..."
 	} else {
-		helpVP = viewPortStyle.Render(fmt.Sprintf("  %s\n\n%s\n", kMsgValueTitleStyle.Render("Help"), m.helpVP.View()))
+		helpVP = helpVPStyle.Render(fmt.Sprintf("  %s\n\n%s\n", helpVPTitleStyle.Render("Help"), m.helpVP.View()))
 	}
 
 	switch m.vpFullScreen {
 	case false:
 		content = lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			stackListStyle.Render(m.kMsgsList.View()),
+			msgListStyle.Render(m.msgsList.View()),
 			msgValueVP,
 		)
 	case true:

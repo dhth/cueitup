@@ -5,3 +5,5 @@ debug.log
 messages
 cosign.key
 cosign.pub
+.quickrun
+justfile

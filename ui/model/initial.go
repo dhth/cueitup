@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf MsgConsumptionConf) model {
@@ -39,7 +40,7 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		queueUrl:             queueUrl,
 		msgConsumptionConf:   msgConsumptionConf,
 		pollForQueueMsgCount: true,
-		kMsgsList:            list.New(jobItems, appDelegate, listWidth+10, 0),
+		msgsList:             list.New(jobItems, appDelegate, listWidth+10, 0),
 		recordMetadataStore:  make(map[string]string),
 		recordValueStore:     make(map[string]string),
 		persistDir:           persistDir,
@@ -47,10 +48,13 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		showHelpIndicator:    true,
 		debugMode:            dbg,
 	}
-	m.kMsgsList.Title = "Messages"
-	m.kMsgsList.SetStatusBarItemName("message", "messages")
-	m.kMsgsList.SetFilteringEnabled(false)
-	m.kMsgsList.SetShowHelp(false)
+	m.msgsList.Title = "Messages"
+	m.msgsList.SetStatusBarItemName("message", "messages")
+	m.msgsList.SetFilteringEnabled(false)
+	m.msgsList.SetShowHelp(false)
+	m.msgsList.Styles.Title.Background(lipgloss.Color(listColor))
+	m.msgsList.Styles.Title.Foreground(lipgloss.Color(defaultBackgroundColor))
+	m.msgsList.Styles.Title.Bold(true)
 
 	return m
 }

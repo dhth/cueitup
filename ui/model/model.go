@@ -43,7 +43,7 @@ type model struct {
 	activeView           stateView
 	lastView             stateView
 	pollForQueueMsgCount bool
-	kMsgsList            list.Model
+	msgsList             list.Model
 	helpVP               viewport.Model
 	showHelpIndicator    bool
 	msgMetadataVP        viewport.Model

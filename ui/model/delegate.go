@@ -21,8 +21,8 @@ func newAppItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color("#fe8019")).
-		BorderLeftForeground(lipgloss.Color("#fe8019"))
+		Foreground(lipgloss.Color(listColor)).
+		BorderLeftForeground(lipgloss.Color(listColor))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle.
 		Copy()
