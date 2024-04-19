@@ -63,12 +63,13 @@ type model struct {
 	msg                  string
 	errorMsg             string
 	debugMode            bool
+	firstFetch           bool
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		GetQueueMsgCount(m.sqsClient, m.queueUrl),
 		tickEvery(msgCountTickInterval),
-		hideHelp(time.Second*30),
+		hideHelp(time.Minute*1),
 	)
 }

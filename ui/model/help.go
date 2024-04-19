@@ -27,9 +27,9 @@ var (
 		helpHeaderStyle.Render("Keyboard Shortcuts"),
 		helpHeaderStyle.Render("General"),
 		helpSectionStyle.Render(`
-      <tab>                           Switch focus to next section
-      <s-tab>                         Switch focus to previous section
-      ?                               Show help view
+      <tab>                          Switch focus to next section
+      <s-tab>                        Switch focus to previous section
+      ?                              Show help view
 `),
 		helpHeaderStyle.Render("List View"),
 		helpSectionStyle.Render(`
@@ -39,25 +39,25 @@ var (
       N                              Fetch up to 10 more messages from the queue
       }                              Fetch up to 100 more messages from the queue
       d                              Toggle deletion mode; cueitup will delete messages
-                                     after reading them
+                                         after reading them
       <ctrl+s>                       Toggle contextual search prompt
       <ctrl+f>                       Toggle contextual filtering ON/OFF
       <ctrl+p>                       Toggle queue message count polling ON/OFF; ON by default
       p                              Toggle persist mode (cueitup will start persisting
-                                        messages, at the location
-                                        messages/<topic-name>/<timestamp-when-cueitup-started>/<unix-epoch>-<message-id>.md
+                                         messages, at the location
+                                         messages/<topic-name>/<timestamp-when-cueitup-started>/<unix-epoch>-<message-id>.md
       s                              Toggle skipping mode; cueitup will consume messages,
-                                        but not populate its internal list, effectively
-                                        skipping over them
+                                         but not populate its internal list, effectively
+                                         skipping over them
 `),
 		helpHeaderStyle.Render("Message Value View   "),
 		helpSectionStyle.Render(`
-      f                               Toggle focussed section between full screen and
+      f                              Toggle focussed section between full screen and
                                          regular mode
-      1                               Maximize message value view
-      q                               Minimize section, and return focus to list view
-      [                               Show details for the previous entry in the list
-      ]                               Show details for the next entry in the list
+      1                              Maximize message value view
+      q                              Minimize section, and return focus to list view
+      [                              Show details for the previous entry in the list
+      ]                              Show details for the next entry in the list
 `),
 	)
 )

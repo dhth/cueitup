@@ -58,8 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "n", " ":
 			m.msg = " ..."
-			return m,
-				m.FetchMessages(1, 0)
+			cmds = append(cmds, m.FetchMessages(1, 0))
 		case "N":
 			m.msg = " ..."
 			for i := 0; i < 10; i++ {
@@ -67,7 +66,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.FetchMessages(1, 0),
 				)
 			}
-			return m, tea.Batch(cmds...)
 		case "}":
 			m.msg = " ..."
 			for i := 0; i < 20; i++ {
@@ -75,28 +73,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.FetchMessages(5, 0),
 				)
 			}
-			return m, tea.Batch(cmds...)
 		case "?":
 			m.lastView = m.activeView
 			m.activeView = helpView
-			return m, nil
 		case "d":
 			if m.activeView == msgsListView {
 				m.deleteMsgs = !m.deleteMsgs
 			}
-			return m, nil
 		case "p":
 			if m.persistRecords == false {
 				m.skipRecords = false
 			}
 			m.persistRecords = !m.persistRecords
-			return m, nil
 		case "s":
 			if m.skipRecords == false {
 				m.persistRecords = false
 			}
 			m.skipRecords = !m.skipRecords
-			return m, nil
 		case "[", "h":
 			if m.activeView == msgValueView {
 				m.msgsList.CursorUp()
@@ -112,18 +105,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
 			if m.pollForQueueMsgCount {
-				return m,
-					tea.Batch(GetQueueMsgCount(m.sqsClient,
-						m.queueUrl),
+				cmds = append(cmds,
+					tea.Batch(GetQueueMsgCount(m.sqsClient, m.queueUrl),
 						tickEvery(msgCountTickInterval),
-					)
+					),
+				)
 			}
 		case "ctrl+s":
 			if m.activeView != contextualSearchView {
 				m.lastView = m.activeView
 				m.activeView = contextualSearchView
 			}
-			return m, tea.Batch(cmds...)
 		case "ctrl+f":
 			if len(m.contextSearchValues) > 0 {
 				m.filterMessages = !m.filterMessages
@@ -131,6 +123,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+r":
 			m.msgsList.SetItems(make([]list.Item, 0))
 			m.msgValueVP.SetContent("")
+			m.firstFetch = true
 		case "1":
 			m.msgValueVP.Width = m.terminalWidth - 1
 			m.msgValueVP.Height = m.terminalHeight - 7
@@ -151,22 +144,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "tab":
-			if m.vpFullScreen {
-				return m, nil
-			}
-			if m.activeView == msgsListView {
-				m.activeView = msgValueView
-			} else if m.activeView == msgValueView {
-				m.activeView = msgsListView
+			if !m.vpFullScreen {
+				if m.activeView == msgsListView {
+					m.activeView = msgValueView
+				} else if m.activeView == msgValueView {
+					m.activeView = msgsListView
+				}
 			}
 		case "shift+tab":
-			if m.vpFullScreen {
-				return m, nil
-			}
-			if m.activeView == msgsListView {
-				m.activeView = msgsListView
-			} else if m.activeView == msgValueView {
-				m.activeView = msgsListView
+			if !m.vpFullScreen {
+				if m.activeView == msgsListView {
+					m.activeView = msgsListView
+				} else if m.activeView == msgValueView {
+					m.activeView = msgsListView
+				}
 			}
 		}
 
@@ -200,7 +191,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.recordValueStore[msg.storeKey] = msg.msgValue
 		}
-		return m, tea.Batch(cmds...)
 
 	case ContextSearchValuesSetMsg:
 		m.contextSearchValues = msg.values
@@ -230,7 +220,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 					m.msgsList.InsertItem(len(m.msgsList.Items()),
-						KMsgItem{message: message,
+						msgItem{message: message,
 							messageValue:    msg.messageValues[i],
 							contextKeyName:  m.msgConsumptionConf.ContextKey,
 							contextKeyValue: msg.keyValues[i],
@@ -256,6 +246,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							msg.messages),
 					)
 				}
+				if m.firstFetch {
+					if len(m.msgsList.Items()) > 0 {
+						result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
+						m.msgValueVP.SetContent(result)
+						m.firstFetch = false
+					}
+				}
 			}
 		}
 	case KMsgChosenMsg:
@@ -271,7 +268,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.pollForQueueMsgCount {
 			cmds = append(cmds, tickEvery(msgCountTickInterval))
 		}
-		return m, tea.Batch(cmds...)
 	case QueueMsgCountFetchedMsg:
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()

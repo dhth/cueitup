@@ -14,8 +14,7 @@ import (
 
 func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf MsgConsumptionConf) model {
 
-	var appDelegateKeys = newAppDelegateKeyMap()
-	appDelegate := newAppItemDelegate(appDelegateKeys)
+	appDelegate := newAppItemDelegate()
 	jobItems := make([]list.Item, 0)
 
 	queueParts := strings.Split(queueUrl, "/")
@@ -46,6 +45,7 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		contextSearchInput:   ti,
 		showHelpIndicator:    true,
 		debugMode:            dbg,
+		firstFetch:           true,
 	}
 	m.msgsList.Title = "Messages"
 	m.msgsList.SetStatusBarItemName("message", "messages")

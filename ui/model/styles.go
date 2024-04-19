@@ -48,11 +48,6 @@ var (
 	inActivePaneHeaderStyle = activePaneHeaderStyle.Copy().
 				Background(lipgloss.Color(inactivePaneColor))
 
-	msgDetailsTitleStyle = baseStyle.Copy().
-				Bold(true).
-				Background(lipgloss.Color("#b8bb26")).
-				Align(lipgloss.Left)
-
 	msgValueTitleStyle = baseStyle.Copy().
 				Bold(true).
 				Background(lipgloss.Color(inactivePaneColor)).

@@ -7,16 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func newAppDelegateKeyMap() *delegateKeyMap {
-	return &delegateKeyMap{
-		choose: key.NewBinding(
-			key.WithKeys("ctrl+f"),
-			key.WithHelp("enter", "check status"),
-		),
-	}
-}
-
-func newAppItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
+func newAppItemDelegate() list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.Styles.SelectedTitle = d.Styles.
@@ -32,7 +23,6 @@ func newAppItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msgType,
-				keys.choose,
 				list.DefaultKeyMap().CursorUp,
 				list.DefaultKeyMap().CursorDown,
 				list.DefaultKeyMap().GoToStart,
@@ -40,7 +30,7 @@ func newAppItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 				list.DefaultKeyMap().NextPage,
 				list.DefaultKeyMap().PrevPage,
 			):
-				if item, ok := m.SelectedItem().(KMsgItem); ok {
+				if item, ok := m.SelectedItem().(msgItem); ok {
 					return showItemDetails(*item.message.MessageId)
 				} else {
 					return nil
@@ -51,14 +41,5 @@ func newAppItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		return nil
 	}
 
-	help := []key.Binding{keys.choose}
-
-	d.ShortHelpFunc = func() []key.Binding {
-		return help
-	}
-
-	d.FullHelpFunc = func() [][]key.Binding {
-		return [][]key.Binding{help}
-	}
 	return d
 }
