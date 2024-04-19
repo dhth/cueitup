@@ -13,14 +13,13 @@ var (
 func (m model) View() string {
 	var content string
 	var footer string
-	var valueViewPtr string
 	var mode string
 	var statusBar string
 	var debugMsg string
 	var msgValVPTitleStyle lipgloss.Style
 
-	if m.msg != "" {
-		statusBar = Trim(m.msg, 120)
+	if m.message != "" {
+		statusBar = Trim(m.message, 120)
 	}
 	m.msgsList.Styles.Title.Background(lipgloss.Color(inactivePaneColor))
 	msgValVPTitleStyle = msgValueTitleStyle.Copy()
@@ -63,7 +62,12 @@ func (m model) View() string {
 	if !m.msgValueVPReady {
 		msgValueVP = "\n  Initializing..."
 	} else {
-		msgValueVP = msgValueVPStyle.Render(fmt.Sprintf("%s%s\n\n%s\n", msgValVPTitleStyle.Render("Message Value"), valueViewPtr, m.msgValueVP.View()))
+		switch m.vpFullScreen {
+		case true:
+			msgValueVP = msgValueVPFSStyle.Render(fmt.Sprintf("  %s\n\n%s\n", msgValVPTitleStyle.Render("Message Value"), m.msgValueVP.View()))
+		case false:
+			msgValueVP = msgValueVPStyle.Render(fmt.Sprintf("  %s\n\n%s\n", msgValVPTitleStyle.Render("Message Value"), m.msgValueVP.View()))
+		}
 	}
 	var helpVP string
 	if !m.helpVPReady {
@@ -73,7 +77,7 @@ func (m model) View() string {
 	}
 
 	switch m.activeView {
-	case msgsListView:
+	case msgsListView, contextualSearchView:
 		content = lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			msgListStyle.Render(m.msgsList.View()),

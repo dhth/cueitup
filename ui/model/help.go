@@ -29,9 +29,10 @@ var (
 		helpSectionStyle.Render(`
       <tab>                          Switch focus to next section
       <s-tab>                        Switch focus to previous section
+      1                              Maximize message value view
       ?                              Show help view
 `),
-		helpHeaderStyle.Render("List View"),
+		helpHeaderStyle.Render("Message List View"),
 		helpSectionStyle.Render(`
       h/<Up>                         Move cursor up
       k/<Down>                       Move cursor down
@@ -52,12 +53,9 @@ var (
 `),
 		helpHeaderStyle.Render("Message Value View   "),
 		helpSectionStyle.Render(`
-      f                              Toggle focussed section between full screen and
-                                         regular mode
-      1                              Maximize message value view
       q                              Minimize section, and return focus to list view
-      [                              Show details for the previous entry in the list
-      ]                              Show details for the next entry in the list
+      [,h                            Show details for the previous entry in the list
+      ],l                            Show details for the next entry in the list
 `),
 	)
 )

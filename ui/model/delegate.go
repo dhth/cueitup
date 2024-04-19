@@ -30,11 +30,12 @@ func newAppItemDelegate() list.DefaultDelegate {
 				list.DefaultKeyMap().NextPage,
 				list.DefaultKeyMap().PrevPage,
 			):
-				if item, ok := m.SelectedItem().(msgItem); ok {
-					return showItemDetails(*item.message.MessageId)
-				} else {
+				selected := m.SelectedItem()
+				if selected == nil {
 					return nil
 				}
+				key := selected.FilterValue()
+				return showItemDetails(key)
 			}
 
 		}

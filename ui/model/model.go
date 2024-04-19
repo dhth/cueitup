@@ -60,7 +60,7 @@ type model struct {
 	vpFullScreen         bool
 	terminalWidth        int
 	terminalHeight       int
-	msg                  string
+	message              string
 	errorMsg             string
 	debugMode            bool
 	firstFetch           bool

@@ -27,7 +27,12 @@ var (
 			Border(lipgloss.NormalBorder(), false, true, false, false).
 			BorderForeground(lipgloss.Color(listPaneBorderColor))
 
-	msgValueVPStyle = baseListStyle.Copy().Width(150).PaddingLeft(3)
+	msgValueVPStyle   = baseListStyle.Copy().Width(150).PaddingLeft(3)
+	msgValueVPFSStyle = lipgloss.NewStyle().
+				PaddingTop(1).
+				PaddingRight(2).
+				PaddingLeft(1).
+				PaddingBottom(1)
 
 	helpVPStyle = lipgloss.NewStyle().
 			PaddingTop(1).

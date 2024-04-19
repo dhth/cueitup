@@ -13,35 +13,9 @@ import (
 const useHighPerformanceRenderer = false
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
 	var cmds []tea.Cmd
-	m.msg = ""
+	m.message = ""
 	m.errorMsg = ""
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "esc":
-			if m.activeView == contextualSearchView {
-				m.activeView = m.lastView
-				return m, tea.Batch(cmds...)
-			}
-		case "enter":
-			if m.activeView == contextualSearchView {
-				m.activeView = m.lastView
-				if len(m.contextSearchInput.Value()) > 0 {
-					return m, setContextSearchValues(m.contextSearchInput.Value())
-				}
-			}
-		}
-	}
-
-	switch m.activeView {
-	case contextualSearchView:
-		m.contextSearchInput, cmd = m.contextSearchInput.Update(msg)
-		cmds = append(cmds, cmd)
-		return m, tea.Batch(cmds...)
-	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -51,23 +25,40 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msgsListView:
 				return m, tea.Quit
 			case msgValueView:
-				m.activeView = msgsListView
-				m.msgValueVP.Width = 120
+				if m.vpFullScreen {
+					m.vpFullScreen = false
+					m.msgValueVP.Width = 120
+				} else {
+					m.activeView = msgsListView
+				}
 			case helpView:
 				m.activeView = m.lastView
 			}
+		case "esc":
+			if m.activeView == contextualSearchView {
+				m.activeView = m.lastView
+			}
+		case "enter":
+			if m.activeView == contextualSearchView {
+				m.activeView = m.lastView
+				if len(m.contextSearchInput.Value()) > 0 {
+					cmds = append(cmds, setContextSearchValues(m.contextSearchInput.Value()))
+				} else {
+					m.filterMessages = false
+				}
+			}
 		case "n", " ":
-			m.msg = " ..."
+			m.message = " ..."
 			cmds = append(cmds, m.FetchMessages(1, 0))
 		case "N":
-			m.msg = " ..."
+			m.message = " ..."
 			for i := 0; i < 10; i++ {
 				cmds = append(cmds,
 					m.FetchMessages(1, 0),
 				)
 			}
 		case "}":
-			m.msg = " ..."
+			m.message = " ..."
 			for i := 0; i < 20; i++ {
 				cmds = append(cmds,
 					m.FetchMessages(5, 0),
@@ -93,14 +84,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "[", "h":
 			if m.activeView == msgValueView {
 				m.msgsList.CursorUp()
-				result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
-				m.msgValueVP.SetContent(result)
+				selected := m.msgsList.SelectedItem()
+				if selected != nil {
+					result := string(pretty.Color([]byte(m.recordValueStore[selected.FilterValue()]), nil))
+					m.msgValueVP.SetContent(result)
+				}
 			}
 		case "]", "l":
 			if m.activeView == msgValueView {
 				m.msgsList.CursorDown()
-				result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
-				m.msgValueVP.SetContent(result)
+				selected := m.msgsList.SelectedItem()
+				if selected != nil {
+					result := string(pretty.Color([]byte(m.recordValueStore[selected.FilterValue()]), nil))
+					m.msgValueVP.SetContent(result)
+				}
 			}
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
@@ -112,7 +109,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				)
 			}
 		case "ctrl+s":
-			if m.activeView != contextualSearchView {
+			if m.activeView == msgsListView {
 				m.lastView = m.activeView
 				m.activeView = contextualSearchView
 			}
@@ -121,28 +118,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.filterMessages = !m.filterMessages
 			}
 		case "ctrl+r":
-			m.msgsList.SetItems(make([]list.Item, 0))
-			m.msgValueVP.SetContent("")
-			m.firstFetch = true
+			if m.activeView == msgsListView {
+				m.msgsList.SetItems(make([]list.Item, 0))
+				m.msgValueVP.SetContent("")
+				m.firstFetch = true
+				m.filterMessages = false
+			}
 		case "1":
 			m.msgValueVP.Width = m.terminalWidth - 1
 			m.msgValueVP.Height = m.terminalHeight - 7
 			m.vpFullScreen = true
 			m.lastView = msgsListView
 			m.activeView = msgValueView
-		case "f":
-			switch m.activeView {
-			case msgValueView:
-				switch m.vpFullScreen {
-				case false:
-					m.msgValueVP.Height = m.terminalHeight - 7
-					m.lastView = msgValueView
-					m.vpFullScreen = true
-				case true:
-					m.vpFullScreen = false
-					m.activeView = m.lastView
-				}
-			}
 		case "tab":
 			if !m.vpFullScreen {
 				if m.activeView == msgsListView {
@@ -247,8 +234,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					)
 				}
 				if m.firstFetch {
-					if len(m.msgsList.Items()) > 0 {
-						result := string(pretty.Color([]byte(m.recordValueStore[m.msgsList.SelectedItem().FilterValue()]), nil))
+					selected := m.msgsList.SelectedItem()
+					if selected != nil {
+						result := string(pretty.Color([]byte(m.recordValueStore[selected.FilterValue()]), nil))
 						m.msgValueVP.SetContent(result)
 						m.firstFetch = false
 					}
@@ -276,16 +264,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	var updateCmd tea.Cmd
 	switch m.activeView {
 	case msgsListView:
-		m.msgsList, cmd = m.msgsList.Update(msg)
-		cmds = append(cmds, cmd)
+		m.msgsList, updateCmd = m.msgsList.Update(msg)
+		cmds = append(cmds, updateCmd)
 	case msgValueView:
-		m.msgValueVP, cmd = m.msgValueVP.Update(msg)
-		cmds = append(cmds, cmd)
+		m.msgValueVP, updateCmd = m.msgValueVP.Update(msg)
+		cmds = append(cmds, updateCmd)
 	case helpView:
-		m.helpVP, cmd = m.helpVP.Update(msg)
-		cmds = append(cmds, cmd)
+		m.helpVP, updateCmd = m.helpVP.Update(msg)
+		cmds = append(cmds, updateCmd)
+	case contextualSearchView:
+		m.contextSearchInput, updateCmd = m.contextSearchInput.Update(msg)
+		cmds = append(cmds, updateCmd)
 	}
 
 	return m, tea.Batch(cmds...)

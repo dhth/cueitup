@@ -106,7 +106,7 @@ Reference Manual
 cueitup has 3 views:
 - Message List View
 - Message Value View
-- Help View (this one)
+- Help View
 
 Keyboard Shortcuts
 
@@ -114,9 +114,10 @@ General
 
    <tab>                          Switch focus to next section
    <s-tab>                        Switch focus to previous section
+   1                              Maximize message value view
    ?                              Show help view
 
-List View
+Message List View
 
    h/<Up>                         Move cursor up
    k/<Down>                       Move cursor down
@@ -137,12 +138,9 @@ List View
 
 Message Value View
 
-   f                              Toggle focussed section between full screen and
-                                      regular mode
-   1                              Maximize message value view
    q                              Minimize section, and return focus to list view
-   [                              Show details for the previous entry in the list
-   ]                              Show details for the next entry in the list
+   [,h                            Show details for the previous entry in the list
+   ],l                            Show details for the next entry in the list
 ```
 
 TODO
