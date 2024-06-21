@@ -54,7 +54,6 @@ type model struct {
 	skipRecords          bool
 	persistRecords       bool
 	persistDir           string
-	filteredKeys         []string
 	msgValueVPReady      bool
 	helpVPReady          bool
 	vpFullScreen         bool

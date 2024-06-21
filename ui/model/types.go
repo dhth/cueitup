@@ -9,8 +9,6 @@ import (
 type msgItem struct {
 	message         types.Message
 	messageValue    string
-	msgMetadata     string
-	msgValue        string
 	contextKeyName  string
 	contextKeyValue string
 }

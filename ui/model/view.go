@@ -21,14 +21,15 @@ func (m model) View() string {
 	if m.message != "" {
 		statusBar = Trim(m.message, 120)
 	}
-	m.msgsList.Styles.Title.Background(lipgloss.Color(inactivePaneColor))
-	msgValVPTitleStyle = msgValueTitleStyle.Copy()
+
+	m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(inactivePaneColor))
+	msgValVPTitleStyle = msgValueTitleStyle
 
 	switch m.activeView {
 	case msgsListView:
-		m.msgsList.Styles.Title.Background(lipgloss.Color(activeHeaderColor))
+		m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(activeHeaderColor))
 	case msgValueView:
-		msgValVPTitleStyle.Background(lipgloss.Color(activeHeaderColor))
+		msgValVPTitleStyle = msgValVPTitleStyle.Background(lipgloss.Color(activeHeaderColor))
 	case contextualSearchView:
 		statusBar = m.contextSearchInput.View()
 	}

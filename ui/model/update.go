@@ -72,12 +72,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.deleteMsgs = !m.deleteMsgs
 			}
 		case "p":
-			if m.persistRecords == false {
+			if !m.persistRecords {
 				m.skipRecords = false
 			}
 			m.persistRecords = !m.persistRecords
 		case "s":
-			if m.skipRecords == false {
+			if !m.skipRecords {
 				m.persistRecords = false
 			}
 			m.skipRecords = !m.skipRecords

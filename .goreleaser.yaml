@@ -1,4 +1,4 @@
-version: 1
+version: 2
 
 before:
   hooks:
@@ -31,7 +31,7 @@ brews:
     repository:
       owner: dhth
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     license: MIT
     homepage: "https://github.com/dhth/cueitup"
     description: "Inspect messages in an AWS SQS queue in a simple and deliberate manner"

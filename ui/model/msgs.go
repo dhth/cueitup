@@ -38,7 +38,6 @@ type RecordSavedToDiskMsg struct {
 
 type KMsgValueReadyMsg struct {
 	storeKey string
-	record   *types.Message
 	msgValue string
 	err      error
 }

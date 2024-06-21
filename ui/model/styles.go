@@ -22,12 +22,12 @@ var (
 
 	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
 
-	msgListStyle = baseListStyle.Copy().
+	msgListStyle = baseListStyle.
 			Width(listWidth+5).
 			Border(lipgloss.NormalBorder(), false, true, false, false).
 			BorderForeground(lipgloss.Color(listPaneBorderColor))
 
-	msgValueVPStyle   = baseListStyle.Copy().Width(150).PaddingLeft(3)
+	msgValueVPStyle   = baseListStyle.Width(150).PaddingLeft(3)
 	msgValueVPFSStyle = lipgloss.NewStyle().
 				PaddingTop(1).
 				PaddingRight(2).
@@ -40,45 +40,37 @@ var (
 			PaddingLeft(1).
 			PaddingBottom(1)
 
-	modeStyle = baseStyle.Copy().
+	modeStyle = baseStyle.
 			Align(lipgloss.Center).
 			Bold(true).
 			Background(lipgloss.Color("#b8bb26"))
 
-	activePaneHeaderStyle = baseStyle.Copy().
-				Align(lipgloss.Left).
-				Bold(true).
-				Background(lipgloss.Color(activeHeaderColor))
-
-	inActivePaneHeaderStyle = activePaneHeaderStyle.Copy().
-				Background(lipgloss.Color(inactivePaneColor))
-
-	msgValueTitleStyle = baseStyle.Copy().
+	msgValueTitleStyle = baseStyle.
 				Bold(true).
 				Background(lipgloss.Color(inactivePaneColor)).
 				Align(lipgloss.Left)
 
-	persistingStyle = baseStyle.Copy().
+	persistingStyle = baseStyle.
 			Bold(true).
 			Foreground(lipgloss.Color("#fb4934"))
 
-	deletingMsgsStyle = baseStyle.Copy().
+	deletingMsgsStyle = baseStyle.
 				Bold(true).
 				Foreground(lipgloss.Color("#d3869b"))
 
-	skippingStyle = baseStyle.Copy().
+	skippingStyle = baseStyle.
 			Bold(true).
 			Foreground(lipgloss.Color("#fabd2f"))
 
-	pollingMsgStyle = baseStyle.Copy().
+	pollingMsgStyle = baseStyle.
 			Bold(true).
 			Foreground(lipgloss.Color("#928374"))
 
-	helpMsgStyle = baseStyle.Copy().
+	helpMsgStyle = baseStyle.
 			Bold(true).
 			Foreground(lipgloss.Color(helpMsgColor))
 
-	helpVPTitleStyle = baseStyle.Copy().
+	helpVPTitleStyle = baseStyle.
 				Bold(true).
 				Background(lipgloss.Color(helpViewTitleColor)).
 				Align(lipgloss.Left)
