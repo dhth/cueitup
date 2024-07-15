@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.34.1
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.6
-	github.com/charmbracelet/lipgloss v0.11.0
+	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/tidwall/pretty v1.2.1
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.1 // indirect
 	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/x/ansi v0.1.2 // indirect
+	github.com/charmbracelet/x/ansi v0.1.4 // indirect
 	github.com/charmbracelet/x/input v0.1.2 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.1.2 // indirect
