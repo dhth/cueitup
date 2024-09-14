@@ -1,8 +1,8 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -10,18 +10,17 @@ import (
 	"github.com/dhth/cueitup/ui/model"
 )
 
-func RenderUI(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf model.MsgConsumptionConf) {
+var errFailedToConfigureDebugging = errors.New("failed to configure debugging")
 
+func RenderUI(sqsClient *sqs.Client, queueURL string, msgConsumptionConf model.MsgConsumptionConf) error {
 	if len(os.Getenv("DEBUG")) > 0 {
 		f, err := tea.LogToFile("debug.log", "debug")
 		if err != nil {
-			fmt.Println("fatal:", err)
-			os.Exit(1)
+			return fmt.Errorf("%w: %s", errFailedToConfigureDebugging, err.Error())
 		}
 		defer f.Close()
 	}
-	p := tea.NewProgram(model.InitialModel(sqsClient, queueUrl, msgConsumptionConf), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		log.Fatalf("Something went wrong %s", err)
-	}
+	p := tea.NewProgram(model.InitialModel(sqsClient, queueURL, msgConsumptionConf), tea.WithAltScreen())
+	_, err := p.Run()
+	return err
 }

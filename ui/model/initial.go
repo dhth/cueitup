@@ -12,12 +12,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf MsgConsumptionConf) model {
-
+func InitialModel(sqsClient *sqs.Client, queueURL string, msgConsumptionConf MsgConsumptionConf) Model {
 	appDelegate := newAppItemDelegate()
 	jobItems := make([]list.Item, 0)
 
-	queueParts := strings.Split(queueUrl, "/")
+	queueParts := strings.Split(queueURL, "/")
 	queueName := queueParts[len(queueParts)-1]
 	currentTime := time.Now()
 	timeString := currentTime.Format("2006-01-02-15-04-05")
@@ -34,9 +33,9 @@ func InitialModel(sqsClient *sqs.Client, queueUrl string, msgConsumptionConf Msg
 		dbg = true
 	}
 
-	m := model{
+	m := Model{
 		sqsClient:            sqsClient,
-		queueUrl:             queueUrl,
+		queueURL:             queueURL,
 		msgConsumptionConf:   msgConsumptionConf,
 		pollForQueueMsgCount: true,
 		msgsList:             list.New(jobItems, appDelegate, listWidth+10, 0),
