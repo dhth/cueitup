@@ -40,7 +40,7 @@ jobs:
 
             // 2. Prepare format of the comment
             const output = `### dstlled-diff
-            > ${{ steps.get-starting-commit.outputs.commit }}..${{ steps.get-ending-commit.outputs.commit }} -- '**.go'
+            > ${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.ref }} -- '**.go'
             <details><summary> expand </summary>
 
             \`\`\`diff\n
