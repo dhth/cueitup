@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: get-dstlled-diff
-        uses: dhth/dstll-action-test@v0.1.15
+        uses: dhth/dstll-action-test@v0.1.16
         with:
           directory: '.'
           pattern: '**.go'
