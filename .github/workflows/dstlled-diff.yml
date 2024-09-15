@@ -2,6 +2,7 @@ name: dstlled-diff
 
 on:
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 
 permissions:
   contents: read
@@ -15,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: get-dstlled-diff
-        uses: dhth/dstll-action-test@v0.1.20
+        uses: dhth/dstll-action-test@v0.1.21
         with:
           directory: '.'
           pattern: '**.go'
