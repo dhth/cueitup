@@ -13,8 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: fetch main
-        run: git fetch origin main:main
+        with:
+          ref: 'main'
+      - uses: actions/checkout@v4
       - id: get-dstlled-diff
         uses: dhth/dstlled-diff-action@v0.1.0
         with:
