@@ -14,8 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 'main'
-      - uses: actions/checkout@v4
+          fetch-depth: 0
       - id: get-dstlled-diff
         uses: dhth/dstlled-diff-action@v0.1.0
         with:
