@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: get-dstlled-diff
-        uses: dhth/dstlled-diff-action@v0.1.1
+        uses: dhth/dstlled-diff-action@v0.1.2
         with:
           pattern: '**.go'
           starting-commit: ${{ github.event.pull_request.base.sha }}
