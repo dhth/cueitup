@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -13,13 +14,18 @@ import (
 	"github.com/dhth/cueitup/ui/model"
 )
 
-func die(msg string, args ...any) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
-	os.Exit(1)
-}
+var (
+	errQueueURLEmpty        = errors.New("queue URL is empty")
+	errAWSProfileEmpty      = errors.New("AWS profile is empty")
+	errAWSRegionEmpty       = errors.New("AWS region is empty")
+	errQueueURLIncorrect    = errors.New("queue URL is incorrect")
+	errMsgFormatInvalid     = errors.New("message format is invalid")
+	errInvalidFlagUsage     = errors.New("invalid flag usage")
+	errCouldntLoadAWSConfig = errors.New("couldn't load AWS config")
+)
 
 var (
-	queueUrl   = flag.String("queue-url", "", "url of the queue to consume from")
+	queueURL   = flag.String("queue-url", "", "url of the queue to consume from")
 	awsProfile = flag.String("aws-profile", "", "aws profile to use")
 	awsRegion  = flag.String("aws-region", "", "aws region to use")
 	msgFormat  = flag.String("msg-format", "json", "message format")
@@ -27,8 +33,7 @@ var (
 	contextKey = flag.String("context-key", "", "the key to use as for context in the list")
 )
 
-func Execute() {
-
+func Execute() error {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Inspect messages in an AWS SQS queue in a simple and deliberate manner.\n\nFlags:\n")
 		flag.PrintDefaults()
@@ -36,35 +41,37 @@ func Execute() {
 	}
 	flag.Parse()
 
-	if *queueUrl == "" {
-		die("queue-url cannot be empty")
-	} else if !strings.HasPrefix(*queueUrl, "https://") {
-		die("queue-url must begin with https")
+	if *queueURL == "" {
+		return errQueueURLEmpty
+	}
+
+	if !strings.HasPrefix(*queueURL, "https://") {
+		return fmt.Errorf("%w: must begin with https", errQueueURLIncorrect)
 	}
 
 	if *awsProfile == "" {
-		die("aws-profile cannot be empty")
+		return errAWSProfileEmpty
 	}
 
 	if *awsRegion == "" {
-		die("aws-region cannot be empty")
+		return errAWSRegionEmpty
 	}
 
 	var msgFmt model.MsgFmt
 	switch *msgFormat {
 	case "json":
-		msgFmt = model.JsonFmt
+		msgFmt = model.JSONFmt
 	case "plaintext":
 		msgFmt = model.PlainTxtFmt
 	default:
-		die("cueitup only supports the following msg-format values: json, plaintext")
+		return fmt.Errorf("%w: supported values: json, plaintext", errMsgFormatInvalid)
 	}
 
-	if *subsetKey != "" && msgFmt != model.JsonFmt {
-		die("subset-key can only be used when msg-format=json")
+	if *subsetKey != "" && msgFmt != model.JSONFmt {
+		return fmt.Errorf("%w: subset-key can only be used when msg-format=json", errInvalidFlagUsage)
 	}
-	if *contextKey != "" && msgFmt != model.JsonFmt {
-		die("context-key can only be used when msg-format=json")
+	if *contextKey != "" && msgFmt != model.JSONFmt {
+		return fmt.Errorf("%w: context-key can only be used when msg-format=json", errInvalidFlagUsage)
 	}
 
 	msgConsumptionConf := model.MsgConsumptionConf{
@@ -78,12 +85,10 @@ func Execute() {
 		config.WithRegion(*awsRegion),
 	)
 	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		return fmt.Errorf("%w: %s", errCouldntLoadAWSConfig, err.Error())
 	}
 
 	sqsClient := sqs.NewFromConfig(sdkConfig)
 
-	ui.RenderUI(sqsClient, *queueUrl, msgConsumptionConf)
-
+	return ui.RenderUI(sqsClient, *queueURL, msgConsumptionConf)
 }

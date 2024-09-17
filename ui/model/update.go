@@ -10,9 +10,12 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-const useHighPerformanceRenderer = false
+const (
+	useHighPerformanceRenderer = false
+	fetchingIndicator          = " ..."
+)
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	m.message = ""
 	m.errorMsg = ""
@@ -48,17 +51,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "n", " ":
-			m.message = " ..."
+			m.message = fetchingIndicator
 			cmds = append(cmds, m.FetchMessages(1, 0))
 		case "N":
-			m.message = " ..."
+			m.message = fetchingIndicator
 			for i := 0; i < 10; i++ {
 				cmds = append(cmds,
 					m.FetchMessages(1, 0),
 				)
 			}
 		case "}":
-			m.message = " ..."
+			m.message = fetchingIndicator
 			for i := 0; i < 20; i++ {
 				cmds = append(cmds,
 					m.FetchMessages(5, 0),
@@ -103,7 +106,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
 			if m.pollForQueueMsgCount {
 				cmds = append(cmds,
-					tea.Batch(GetQueueMsgCount(m.sqsClient, m.queueUrl),
+					tea.Batch(GetQueueMsgCount(m.sqsClient, m.queueURL),
 						tickEvery(msgCountTickInterval),
 					),
 				)
@@ -191,8 +194,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
-			switch m.skipRecords {
-			case false:
+			if !m.skipRecords {
 				vPresenceMap := make(map[string]bool)
 				if m.filterMessages && len(m.contextSearchValues) > 0 {
 					for _, p := range m.contextSearchValues {
@@ -200,20 +202,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				for i, message := range msg.messages {
-
 					// only save/persist values that are requested to be filtered
 					if m.filterMessages && !(msg.keyValues[i] != "" && vPresenceMap[msg.keyValues[i]]) {
 						continue
 					}
 
 					m.msgsList.InsertItem(len(m.msgsList.Items()),
-						msgItem{message: message,
+						msgItem{
+							message:         message,
 							messageValue:    msg.messageValues[i],
 							contextKeyName:  m.msgConsumptionConf.ContextKey,
 							contextKeyValue: msg.keyValues[i],
 						},
 					)
 					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
+
 					if m.persistRecords {
 						prefix := time.Now().Unix()
 						filePath := fmt.Sprintf("%s/%d-%s.md", m.persistDir, prefix, *message.MessageId)
@@ -226,13 +229,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						)
 					}
 				}
+
 				if m.deleteMsgs {
 					cmds = append(cmds,
 						DeleteMessages(m.sqsClient,
-							m.queueUrl,
+							m.queueURL,
 							msg.messages),
 					)
 				}
+
 				if m.firstFetch {
 					selected := m.msgsList.SelectedItem()
 					if selected != nil {
@@ -245,14 +250,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case KMsgChosenMsg:
 		switch m.deserializationFmt {
-		case JsonFmt:
+		case JSONFmt:
 			result := string(pretty.Color([]byte(m.recordValueStore[msg.key]), nil))
 			m.msgValueVP.SetContent(result)
 		default:
 			m.msgValueVP.SetContent(m.recordValueStore[msg.key])
 		}
 	case MsgCountTickMsg:
-		cmds = append(cmds, GetQueueMsgCount(m.sqsClient, m.queueUrl))
+		cmds = append(cmds, GetQueueMsgCount(m.sqsClient, m.queueURL))
 		if m.pollForQueueMsgCount {
 			cmds = append(cmds, tickEvery(msgCountTickInterval))
 		}

@@ -4,8 +4,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 )
 
-type MsgCountTickMsg struct{}
-type HideHelpMsg struct{}
+type (
+	MsgCountTickMsg struct{}
+	HideHelpMsg     struct{}
+)
 
 type SQSMsgFetchedMsg struct {
 	messages      []types.Message

@@ -25,5 +25,5 @@ func (item msgItem) Description() string {
 }
 
 func (item msgItem) FilterValue() string {
-	return string(*item.message.MessageId)
+	return *item.message.MessageId
 }

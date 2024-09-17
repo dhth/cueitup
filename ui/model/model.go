@@ -22,7 +22,7 @@ const (
 type MsgFmt uint
 
 const (
-	JsonFmt MsgFmt = iota
+	JSONFmt MsgFmt = iota
 	PlainTxtFmt
 )
 
@@ -34,10 +34,10 @@ type MsgConsumptionConf struct {
 	ContextKey string
 }
 
-type model struct {
+type Model struct {
 	deserializationFmt   MsgFmt
 	sqsClient            *sqs.Client
-	queueUrl             string
+	queueURL             string
 	msgConsumptionConf   MsgConsumptionConf
 	activeView           stateView
 	lastView             stateView
@@ -65,9 +65,9 @@ type model struct {
 	firstFetch           bool
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		GetQueueMsgCount(m.sqsClient, m.queueUrl),
+		GetQueueMsgCount(m.sqsClient, m.queueURL),
 		tickEvery(msgCountTickInterval),
 		hideHelp(time.Minute*1),
 	)

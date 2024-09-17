@@ -18,25 +18,24 @@ func newAppItemDelegate() list.DefaultDelegate {
 		SelectedTitle
 
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
-		switch msgType := msg.(type) {
-		case tea.KeyMsg:
-			switch {
-			case key.Matches(msgType,
-				list.DefaultKeyMap().CursorUp,
-				list.DefaultKeyMap().CursorDown,
-				list.DefaultKeyMap().GoToStart,
-				list.DefaultKeyMap().GoToEnd,
-				list.DefaultKeyMap().NextPage,
-				list.DefaultKeyMap().PrevPage,
-			):
-				selected := m.SelectedItem()
-				if selected == nil {
-					return nil
-				}
-				key := selected.FilterValue()
-				return showItemDetails(key)
+		keyMsg, keyMsgOK := msg.(tea.KeyMsg)
+		if !keyMsgOK {
+			return nil
+		}
+		if key.Matches(keyMsg,
+			list.DefaultKeyMap().CursorUp,
+			list.DefaultKeyMap().CursorDown,
+			list.DefaultKeyMap().GoToStart,
+			list.DefaultKeyMap().GoToEnd,
+			list.DefaultKeyMap().NextPage,
+			list.DefaultKeyMap().PrevPage,
+		) {
+			selected := m.SelectedItem()
+			if selected == nil {
+				return nil
 			}
-
+			key := selected.FilterValue()
+			return showItemDetails(key)
 		}
 		return nil
 	}

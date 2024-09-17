@@ -2,8 +2,7 @@ package model
 
 import "fmt"
 
-var (
-	HelpText = fmt.Sprintf(`
+var HelpText = fmt.Sprintf(`
   %s
 %s
   %s
@@ -15,8 +14,8 @@ var (
   %s
 %s
 `,
-		helpHeaderStyle.Render("cueitup Reference Manual"),
-		helpSectionStyle.Render(`
+	helpHeaderStyle.Render("cueitup Reference Manual"),
+	helpSectionStyle.Render(`
   (scroll line by line with j/k/arrow keys or by half a page with <c-d>/<c-u>)
 
   cueitup has 3 views:
@@ -24,16 +23,16 @@ var (
   - Message Value View
   - Help View (this one)
 `),
-		helpHeaderStyle.Render("Keyboard Shortcuts"),
-		helpHeaderStyle.Render("General"),
-		helpSectionStyle.Render(`
+	helpHeaderStyle.Render("Keyboard Shortcuts"),
+	helpHeaderStyle.Render("General"),
+	helpSectionStyle.Render(`
       <tab>                          Switch focus to next section
       <s-tab>                        Switch focus to previous section
       1                              Maximize message value view
       ?                              Show help view
 `),
-		helpHeaderStyle.Render("Message List View"),
-		helpSectionStyle.Render(`
+	helpHeaderStyle.Render("Message List View"),
+	helpSectionStyle.Render(`
       h/<Up>                         Move cursor up
       k/<Down>                       Move cursor down
       n                              Fetch the next message from the queue
@@ -51,11 +50,10 @@ var (
                                          but not populate its internal list, effectively
                                          skipping over them
 `),
-		helpHeaderStyle.Render("Message Value View   "),
-		helpSectionStyle.Render(`
+	helpHeaderStyle.Render("Message Value View   "),
+	helpSectionStyle.Render(`
       q                              Minimize section, and return focus to list view
       [,h                            Show details for the previous entry in the list
       ],l                            Show details for the next entry in the list
 `),
-	)
 )

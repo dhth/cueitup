@@ -87,7 +87,7 @@ func getMessageData(message *types.Message, msgConsumptionConf MsgConsumptionCon
 	var err error
 
 	switch msgConsumptionConf.Format {
-	case JsonFmt:
+	case JSONFmt:
 		if msgConsumptionConf.SubsetKey != "" {
 			msgValue,
 				keyValue,
@@ -103,7 +103,6 @@ func getMessageData(message *types.Message, msgConsumptionConf MsgConsumptionCon
 	}
 	if err != nil {
 		return "", "", err
-	} else {
-		return msgValue, keyValue, nil
 	}
+	return msgValue, keyValue, nil
 }

@@ -15,9 +15,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
+func (m Model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 	return func() tea.Msg {
-
 		var messages []types.Message
 		var messagesValues []string
 		var keyValues []string
@@ -25,7 +24,7 @@ func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 			// WaitTimeSeconds > 0 enables long polling
 			// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html#sqs-long-polling
 			&sqs.ReceiveMessageInput{
-				QueueUrl:            aws.String(m.queueUrl),
+				QueueUrl:            aws.String(m.queueURL),
 				MaxNumberOfMessages: maxMessages,
 				WaitTimeSeconds:     waitTime,
 				VisibilityTimeout:   30,
@@ -35,13 +34,12 @@ func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 				messages: nil,
 				err:      err,
 			}
-		} else {
-			messages = result.Messages
-			for _, message := range messages {
-				msgValue, keyValue, _ := getMessageData(&message, m.msgConsumptionConf)
-				messagesValues = append(messagesValues, msgValue)
-				keyValues = append(keyValues, keyValue)
-			}
+		}
+		messages = result.Messages
+		for _, message := range messages {
+			msgValue, keyValue, _ := getMessageData(&message, m.msgConsumptionConf)
+			messagesValues = append(messagesValues, msgValue)
+			keyValues = append(keyValues, keyValue)
 		}
 
 		return SQSMsgFetchedMsg{
@@ -53,9 +51,8 @@ func (m model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 	}
 }
 
-func DeleteMessages(client *sqs.Client, queueUrl string, messages []types.Message) tea.Cmd {
+func DeleteMessages(client *sqs.Client, queueURL string, messages []types.Message) tea.Cmd {
 	return func() tea.Msg {
-
 		entries := make([]types.DeleteMessageBatchRequestEntry, len(messages))
 		for msgIndex := range messages {
 			entries[msgIndex].Id = aws.String(fmt.Sprintf("%v", msgIndex))
@@ -64,7 +61,7 @@ func DeleteMessages(client *sqs.Client, queueUrl string, messages []types.Messag
 		_, err := client.DeleteMessageBatch(context.TODO(),
 			&sqs.DeleteMessageBatchInput{
 				Entries:  entries,
-				QueueUrl: aws.String(queueUrl),
+				QueueUrl: aws.String(queueURL),
 			})
 		if err != nil {
 			return SQSMsgsDeletedMsg{
@@ -76,16 +73,14 @@ func DeleteMessages(client *sqs.Client, queueUrl string, messages []types.Messag
 	}
 }
 
-func GetQueueMsgCount(client *sqs.Client, queueUrl string) tea.Cmd {
+func GetQueueMsgCount(client *sqs.Client, queueURL string) tea.Cmd {
 	return func() tea.Msg {
-
 		approxMsgCountType := types.QueueAttributeNameApproximateNumberOfMessages
 		attribute, err := client.GetQueueAttributes(context.TODO(),
 			&sqs.GetQueueAttributesInput{
-				QueueUrl:       aws.String(queueUrl),
+				QueueUrl:       aws.String(queueURL),
 				AttributeNames: []types.QueueAttributeName{approxMsgCountType},
 			})
-
 		if err != nil {
 			return QueueMsgCountFetchedMsg{
 				approxMsgCount: -1,
@@ -110,18 +105,18 @@ func GetQueueMsgCount(client *sqs.Client, queueUrl string) tea.Cmd {
 func saveRecordValueToDisk(filePath string, msgValue string, msgFmt MsgFmt) tea.Cmd {
 	return func() tea.Msg {
 		dir := filepath.Dir(filePath)
-		err := os.MkdirAll(dir, 0755)
+		err := os.MkdirAll(dir, 0o755)
 		if err != nil {
 			return RecordSavedToDiskMsg{err: err}
 		}
 		var data string
 		switch msgFmt {
-		case JsonFmt:
+		case JSONFmt:
 			data = fmt.Sprintf("```json\n%s\n```", msgValue)
 		case PlainTxtFmt:
 			data = msgValue
 		}
-		err = os.WriteFile(filePath, []byte(data), 0644)
+		err = os.WriteFile(filePath, []byte(data), 0o644)
 		if err != nil {
 			return RecordSavedToDiskMsg{err: err}
 		}
