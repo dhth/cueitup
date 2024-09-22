@@ -3,6 +3,8 @@ name: dstlled-diff
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - "**.go"
 
 permissions:
   contents: read
@@ -16,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: get-dstlled-diff
-        uses: dhth/dstlled-diff-action@v0.1.2
+        uses: dhth/dstlled-diff-action@0ab616345f8816e9046fdefec81b14ada815aaca # v0.2.0
         with:
           pattern: '**.go'
           starting-commit: ${{ github.event.pull_request.base.sha }}
