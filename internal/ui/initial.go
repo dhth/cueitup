@@ -1,4 +1,4 @@
-package model
+package ui
 
 import (
 	"fmt"
@@ -10,9 +10,15 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
+	t "github.com/dhth/cueitup/internal/types"
 )
 
-func InitialModel(sqsClient *sqs.Client, queueURL string, msgConsumptionConf MsgConsumptionConf) Model {
+func InitialModel(
+	sqsClient *sqs.Client,
+	queueURL string,
+	profile t.Profile,
+	behaviours t.Behaviours,
+) Model {
 	appDelegate := newAppItemDelegate()
 	jobItems := make([]list.Item, 0)
 
@@ -23,7 +29,7 @@ func InitialModel(sqsClient *sqs.Client, queueURL string, msgConsumptionConf Msg
 	persistDir := fmt.Sprintf("messages/%s/%s", queueName, timeString)
 
 	ti := textinput.New()
-	ti.Prompt = fmt.Sprintf("Filter messages where %s in > ", msgConsumptionConf.ContextKey)
+	ti.Prompt = fmt.Sprintf("Filter messages where %s in > ", profile.ContextKey)
 	ti.Focus()
 	ti.CharLimit = 100
 	ti.Width = 100
@@ -36,7 +42,8 @@ func InitialModel(sqsClient *sqs.Client, queueURL string, msgConsumptionConf Msg
 	m := Model{
 		sqsClient:            sqsClient,
 		queueURL:             queueURL,
-		msgConsumptionConf:   msgConsumptionConf,
+		profile:              profile,
+		behaviours:           behaviours,
 		pollForQueueMsgCount: true,
 		msgsList:             list.New(jobItems, appDelegate, listWidth+10, 0),
 		recordValueStore:     make(map[string]string),
