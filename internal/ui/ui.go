@@ -7,12 +7,17 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/dhth/cueitup/ui/model"
+	t "github.com/dhth/cueitup/internal/types"
 )
 
 var errFailedToConfigureDebugging = errors.New("failed to configure debugging")
 
-func RenderUI(sqsClient *sqs.Client, queueURL string, msgConsumptionConf model.MsgConsumptionConf) error {
+func RenderUI(
+	sqsClient *sqs.Client,
+	queueURL string,
+	profile t.Profile,
+	behaviours t.Behaviours,
+) error {
 	if len(os.Getenv("DEBUG")) > 0 {
 		f, err := tea.LogToFile("debug.log", "debug")
 		if err != nil {
@@ -20,7 +25,7 @@ func RenderUI(sqsClient *sqs.Client, queueURL string, msgConsumptionConf model.M
 		}
 		defer f.Close()
 	}
-	p := tea.NewProgram(model.InitialModel(sqsClient, queueURL, msgConsumptionConf), tea.WithAltScreen())
+	p := tea.NewProgram(InitialModel(sqsClient, queueURL, profile, behaviours), tea.WithAltScreen())
 	_, err := p.Run()
 	return err
 }

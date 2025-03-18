@@ -1,12 +1,12 @@
-package model
+package ui
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	t "github.com/dhth/cueitup/internal/types"
 	"github.com/tidwall/pretty"
 )
 
@@ -55,14 +55,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, m.FetchMessages(1, 0))
 		case "N":
 			m.message = fetchingIndicator
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				cmds = append(cmds,
 					m.FetchMessages(1, 0),
 				)
 			}
 		case "}":
 			m.message = fetchingIndicator
-			for i := 0; i < 20; i++ {
+			for range 20 {
 				cmds = append(cmds,
 					m.FetchMessages(5, 0),
 				)
@@ -72,18 +72,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activeView = helpView
 		case "d":
 			if m.activeView == msgsListView {
-				m.deleteMsgs = !m.deleteMsgs
+				m.behaviours.DeleteMessages = !m.behaviours.DeleteMessages
 			}
 		case "p":
-			if !m.persistRecords {
-				m.skipRecords = false
+			if m.activeView == msgsListView {
+				m.behaviours.PersistMessages = !m.behaviours.PersistMessages
 			}
-			m.persistRecords = !m.persistRecords
 		case "s":
-			if !m.skipRecords {
-				m.persistRecords = false
+			if m.activeView == msgsListView {
+				m.behaviours.SkipMessages = !m.behaviours.SkipMessages
 			}
-			m.skipRecords = !m.skipRecords
 		case "[", "h":
 			if m.activeView == msgValueView {
 				m.msgsList.CursorUp()
@@ -194,7 +192,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
-			if !m.skipRecords {
+			if !m.behaviours.SkipMessages {
 				vPresenceMap := make(map[string]bool)
 				if m.filterMessages && len(m.contextSearchValues) > 0 {
 					for _, p := range m.contextSearchValues {
@@ -211,26 +209,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						msgItem{
 							message:         message,
 							messageValue:    msg.messageValues[i],
-							contextKeyName:  m.msgConsumptionConf.ContextKey,
+							contextKeyName:  m.profile.ContextKey,
 							contextKeyValue: msg.keyValues[i],
 						},
 					)
 					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
 
-					if m.persistRecords {
-						prefix := time.Now().Unix()
-						filePath := fmt.Sprintf("%s/%d-%s.md", m.persistDir, prefix, *message.MessageId)
+					if m.behaviours.PersistMessages {
 						cmds = append(cmds,
-							saveRecordValueToDisk(
-								filePath,
+							saveMessageToDisk(
+								*message.MessageId,
 								msg.messageValues[i],
-								m.msgConsumptionConf.Format,
+								m.profile.Format,
+								m.persistDir,
 							),
 						)
 					}
 				}
 
-				if m.deleteMsgs {
+				if m.behaviours.DeleteMessages {
 					cmds = append(cmds,
 						DeleteMessages(m.sqsClient,
 							m.queueURL,
@@ -241,16 +238,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.firstFetch {
 					selected := m.msgsList.SelectedItem()
 					if selected != nil {
-						result := string(pretty.Color([]byte(m.recordValueStore[selected.FilterValue()]), nil))
-						m.msgValueVP.SetContent(result)
-						m.firstFetch = false
+						recordValue, ok := m.recordValueStore[selected.FilterValue()]
+						if ok {
+							switch m.profile.Format {
+							case t.JSON:
+								result := string(pretty.Color([]byte(recordValue), nil))
+								m.msgValueVP.SetContent(result)
+							case t.None:
+								m.msgValueVP.SetContent(recordValue)
+							}
+							m.firstFetch = false
+						}
 					}
 				}
 			}
 		}
-	case KMsgChosenMsg:
-		switch m.deserializationFmt {
-		case JSONFmt:
+	case MsgChosenMsg:
+		switch m.profile.Format {
+		case t.JSON:
 			result := string(pretty.Color([]byte(m.recordValueStore[msg.key]), nil))
 			m.msgValueVP.SetContent(result)
 		default:

@@ -1,4 +1,4 @@
-package model
+package ui
 
 import (
 	"context"
@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	tea "github.com/charmbracelet/bubbletea"
+	t "github.com/dhth/cueitup/internal/types"
+	"github.com/dhth/cueitup/internal/utils"
 )
 
 func (m Model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
@@ -37,7 +39,7 @@ func (m Model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 		}
 		messages = result.Messages
 		for _, message := range messages {
-			msgValue, keyValue, _ := getMessageData(&message, m.msgConsumptionConf)
+			msgValue, keyValue, _ := utils.GetMessageData(&message, m.profile)
 			messagesValues = append(messagesValues, msgValue)
 			keyValues = append(keyValues, keyValue)
 		}
@@ -102,25 +104,22 @@ func GetQueueMsgCount(client *sqs.Client, queueURL string) tea.Cmd {
 	}
 }
 
-func saveRecordValueToDisk(filePath string, msgValue string, msgFmt MsgFmt) tea.Cmd {
+func saveMessageToDisk(id string, value string, format t.MessageFormat, dir string) tea.Cmd {
 	return func() tea.Msg {
-		dir := filepath.Dir(filePath)
+		fileName := fmt.Sprintf("%s.%s", id, format.Extension())
+		fp := filepath.Join(dir, fileName)
+		dir := filepath.Dir(fp)
 		err := os.MkdirAll(dir, 0o755)
 		if err != nil {
 			return RecordSavedToDiskMsg{err: err}
 		}
-		var data string
-		switch msgFmt {
-		case JSONFmt:
-			data = fmt.Sprintf("```json\n%s\n```", msgValue)
-		case PlainTxtFmt:
-			data = msgValue
-		}
-		err = os.WriteFile(filePath, []byte(data), 0o644)
+
+		err = os.WriteFile(fp, []byte(value), 0o644)
 		if err != nil {
 			return RecordSavedToDiskMsg{err: err}
 		}
-		return RecordSavedToDiskMsg{path: filePath}
+
+		return RecordSavedToDiskMsg{path: fp}
 	}
 }
 
@@ -137,7 +136,7 @@ func setContextSearchValues(userInput string) tea.Cmd {
 
 func showItemDetails(key string) tea.Cmd {
 	return func() tea.Msg {
-		return KMsgChosenMsg{key}
+		return MsgChosenMsg{key}
 	}
 }
 

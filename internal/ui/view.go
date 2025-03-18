@@ -1,9 +1,10 @@
-package model
+package ui
 
 import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dhth/cueitup/internal/utils"
 )
 
 var listWidth = 50
@@ -17,7 +18,7 @@ func (m Model) View() string {
 	var msgValVPTitleStyle lipgloss.Style
 
 	if m.message != "" {
-		statusBar = Trim(m.message, 120)
+		statusBar = utils.Trim(m.message, 120)
 	}
 
 	m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(inactivePaneColor))
@@ -32,29 +33,31 @@ func (m Model) View() string {
 		statusBar = m.contextSearchInput.View()
 	}
 
-	if !m.deleteMsgs {
+	if !m.behaviours.DeleteMessages {
 		mode += " " + deletingMsgsStyle.Render("not deleting msgs!")
+	} else {
+		mode += " " + deletingMsgsStyle.Render("deleting msgs!")
 	}
 
 	if !m.pollForQueueMsgCount {
 		mode += " " + pollingMsgStyle.Render("not polling for msg count!")
 	}
 
-	if m.persistRecords {
+	if m.behaviours.PersistMessages {
 		mode += " " + persistingStyle.Render("persisting msgs!")
 	}
 
-	if m.skipRecords {
+	if m.behaviours.SkipMessages {
 		mode += " " + skippingStyle.Render("skipping msgs!")
 	}
 
 	if m.filterMessages && len(m.contextSearchValues) > 0 {
-		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", m.msgConsumptionConf.ContextKey, m.contextSearchValues))
+		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", m.profile.ContextKey, m.contextSearchValues))
 	}
 
 	var errorMsg string
 	if m.errorMsg != "" {
-		errorMsg = " error: " + Trim(m.errorMsg, 120)
+		errorMsg = " error: " + utils.Trim(m.errorMsg, 120)
 	}
 
 	var msgValueVP string

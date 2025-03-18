@@ -1,4 +1,4 @@
-package model
+package ui
 
 import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -25,7 +25,7 @@ type SQSMsgsDeletedMsg struct {
 	err error
 }
 
-type KMsgChosenMsg struct {
+type MsgChosenMsg struct {
 	key string
 }
 

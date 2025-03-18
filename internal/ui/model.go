@@ -1,4 +1,4 @@
-package model
+package ui
 
 import (
 	"time"
@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	t "github.com/dhth/cueitup/internal/types"
 )
 
 type stateView uint
@@ -19,26 +20,13 @@ const (
 	contextualSearchView
 )
 
-type MsgFmt uint
-
-const (
-	JSONFmt MsgFmt = iota
-	PlainTxtFmt
-)
-
 const msgCountTickInterval = time.Second * 3
 
-type MsgConsumptionConf struct {
-	Format     MsgFmt
-	SubsetKey  string
-	ContextKey string
-}
-
 type Model struct {
-	deserializationFmt   MsgFmt
 	sqsClient            *sqs.Client
 	queueURL             string
-	msgConsumptionConf   MsgConsumptionConf
+	profile              t.Profile
+	behaviours           t.Behaviours
 	activeView           stateView
 	lastView             stateView
 	pollForQueueMsgCount bool
@@ -50,9 +38,6 @@ type Model struct {
 	contextSearchInput   textinput.Model
 	contextSearchValues  []string
 	filterMessages       bool
-	deleteMsgs           bool
-	skipRecords          bool
-	persistRecords       bool
 	persistDir           string
 	msgValueVPReady      bool
 	helpVPReady          bool
