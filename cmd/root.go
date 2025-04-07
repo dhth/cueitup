@@ -3,92 +3,133 @@ package cmd
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/dhth/cueitup/ui"
-	"github.com/dhth/cueitup/ui/model"
+	t "github.com/dhth/cueitup/internal/types"
+	"github.com/dhth/cueitup/internal/ui"
+	"github.com/dhth/cueitup/internal/utils"
+	"github.com/spf13/cobra"
+)
+
+const (
+	configFileName = "cueitup/cueitup.yml"
 )
 
 var (
-	errQueueURLEmpty        = errors.New("queue URL is empty")
-	errAWSProfileEmpty      = errors.New("AWS profile is empty")
-	errAWSRegionEmpty       = errors.New("AWS region is empty")
-	errQueueURLIncorrect    = errors.New("queue URL is incorrect")
-	errMsgFormatInvalid     = errors.New("message format is invalid")
-	errInvalidFlagUsage     = errors.New("invalid flag usage")
-	errCouldntLoadAWSConfig = errors.New("couldn't load AWS config")
-)
-
-var (
-	queueURL   = flag.String("queue-url", "", "url of the queue to consume from")
-	awsProfile = flag.String("aws-profile", "", "aws profile to use")
-	awsRegion  = flag.String("aws-region", "", "aws region to use")
-	msgFormat  = flag.String("msg-format", "json", "message format")
-	subsetKey  = flag.String("subset-key", "", "extract a nested object inside the JSON body")
-	contextKey = flag.String("context-key", "", "the key to use as for context in the list")
+	errCouldntLoadAWSConfig    = errors.New("couldn't load AWS config")
+	errCouldntGetUserHomeDir   = errors.New("couldn't get your home directory")
+	errCouldntGetUserConfigDir = errors.New("couldn't get your config directory")
+	ErrCouldntReadConfigFile   = errors.New("couldn't read config file")
 )
 
 func Execute() error {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Inspect messages in an AWS SQS queue in a simple and deliberate manner.\n\nFlags:\n")
-		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\n------\n%s", model.HelpText)
-	}
-	flag.Parse()
-
-	if *queueURL == "" {
-		return errQueueURLEmpty
-	}
-
-	if !strings.HasPrefix(*queueURL, "https://") {
-		return fmt.Errorf("%w: must begin with https", errQueueURLIncorrect)
-	}
-
-	if *awsProfile == "" {
-		return errAWSProfileEmpty
-	}
-
-	if *awsRegion == "" {
-		return errAWSRegionEmpty
-	}
-
-	var msgFmt model.MsgFmt
-	switch *msgFormat {
-	case "json":
-		msgFmt = model.JSONFmt
-	case "plaintext":
-		msgFmt = model.PlainTxtFmt
-	default:
-		return fmt.Errorf("%w: supported values: json, plaintext", errMsgFormatInvalid)
-	}
-
-	if *subsetKey != "" && msgFmt != model.JSONFmt {
-		return fmt.Errorf("%w: subset-key can only be used when msg-format=json", errInvalidFlagUsage)
-	}
-	if *contextKey != "" && msgFmt != model.JSONFmt {
-		return fmt.Errorf("%w: context-key can only be used when msg-format=json", errInvalidFlagUsage)
-	}
-
-	msgConsumptionConf := model.MsgConsumptionConf{
-		Format:     msgFmt,
-		SubsetKey:  *subsetKey,
-		ContextKey: *contextKey,
-	}
-
-	sdkConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithSharedConfigProfile(*awsProfile),
-		config.WithRegion(*awsRegion),
-	)
+	rootCmd, err := NewRootCommand()
 	if err != nil {
-		return fmt.Errorf("%w: %s", errCouldntLoadAWSConfig, err.Error())
+		return err
 	}
 
-	sqsClient := sqs.NewFromConfig(sdkConfig)
+	return rootCmd.Execute()
+}
 
-	return ui.RenderUI(sqsClient, *queueURL, msgConsumptionConf)
+func NewRootCommand() (*cobra.Command, error) {
+	var (
+		configPath      string
+		configPathFull  string
+		homeDir         string
+		profile         t.Profile
+		deleteMessages  bool
+		persistMessages bool
+		skipMessages    bool
+		debug           bool
+	)
+
+	rootCmd := &cobra.Command{
+		Use:   "cueitup <PROFILE>",
+		Short: "cueitup lets you inspect messages in an AWS SQS queue in a simple and deliberate manner",
+		Long: `cueitup lets you inspect messages in an AWS SQS queue in a simple and deliberate manner.
+
+cueitup relies on a configuration file that contains profiles for various SQS topics, each with its
+own details related to authentication, deserialization, etc.
+`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		PersistentPreRunE: func(_ *cobra.Command, args []string) error {
+			configPathFull = utils.ExpandTilde(configPath, homeDir)
+			configBytes, err := os.ReadFile(configPathFull)
+			if err != nil {
+				return fmt.Errorf("%w: %w", ErrCouldntReadConfigFile, err)
+			}
+
+			profile, err = getProfile(configBytes, args[0])
+			if errors.Is(err, errProfileNotFound) {
+				return err
+			} else if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		RunE: func(_ *cobra.Command, _ []string) error {
+			behaviours := t.Behaviours{
+				DeleteMessages:  deleteMessages,
+				PersistMessages: persistMessages,
+				SkipMessages:    skipMessages,
+			}
+
+			if debug {
+				fmt.Printf(`Debug info:
+===
+
+Profile
+---
+%s
+
+Behaviours 
+---
+%s`,
+					profile.Display(),
+					behaviours.Display(),
+				)
+				return nil
+			}
+
+			sdkConfig, err := config.LoadDefaultConfig(context.TODO(),
+				config.WithSharedConfigProfile(profile.ConfigSource),
+			)
+			if err != nil {
+				return fmt.Errorf("%w: %s", errCouldntLoadAWSConfig, err.Error())
+			}
+
+			sqsClient := sqs.NewFromConfig(sdkConfig)
+
+			return ui.RenderUI(sqsClient, profile.QueueURL, profile, behaviours)
+		},
+	}
+
+	var err error
+	homeDir, err = os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", errCouldntGetUserHomeDir, err.Error())
+	}
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", errCouldntGetUserConfigDir, err.Error())
+	}
+
+	defaultConfigPath := filepath.Join(configDir, configFileName)
+
+	rootCmd.Flags().StringVarP(&configPath, "config-path", "c", defaultConfigPath, "location of cueitup's config file")
+	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "whether to only display config picked up by cueitup")
+	rootCmd.Flags().BoolVarP(&deleteMessages, "delete-messages", "D", false, "whether to start the TUI with the setting \"delete messages\" ON")
+	rootCmd.Flags().BoolVarP(&persistMessages, "persist-messages", "P", false, "whether to start the TUI with the setting \"persist messages\" ON")
+	rootCmd.Flags().BoolVarP(&skipMessages, "skip-messages", "S", false, "whether to start the TUI with the setting \"skip messages\" ON")
+
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
+	return rootCmd, nil
 }
