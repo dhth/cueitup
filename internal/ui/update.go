@@ -133,17 +133,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activeView = msgValueView
 		case "tab":
 			if !m.vpFullScreen {
-				if m.activeView == msgsListView {
+				switch m.activeView {
+				case msgsListView:
 					m.activeView = msgValueView
-				} else if m.activeView == msgValueView {
+				case msgValueView:
 					m.activeView = msgsListView
 				}
 			}
 		case "shift+tab":
 			if !m.vpFullScreen {
-				if m.activeView == msgsListView {
+				switch m.activeView {
+				case msgsListView:
 					m.activeView = msgsListView
-				} else if m.activeView == msgValueView {
+				case msgValueView:
 					m.activeView = msgsListView
 				}
 			}
@@ -201,6 +203,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				for i, message := range msg.messages {
 					// only save/persist values that are requested to be filtered
+					// nolint: staticcheck
 					if m.filterMessages && !(msg.keyValues[i] != "" && vPresenceMap[msg.keyValues[i]]) {
 						continue
 					}

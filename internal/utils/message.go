@@ -9,6 +9,8 @@ import (
 	"github.com/tidwall/pretty"
 )
 
+var errUnexpectedType = errors.New("unexpected type")
+
 func getRecordValueJSONFull(message *types.Message) (string, error) {
 	if message.Body == nil {
 		return "", nil
@@ -46,7 +48,7 @@ func getRecordValueJSONNested(message *types.Message, extractKey string, context
 			return "", "", err
 		}
 	default:
-		return "", "", errors.New("Unexpected type")
+		return "", "", errUnexpectedType
 	}
 
 	nestedBytes, err := json.MarshalIndent(nestedData, "", "    ")
