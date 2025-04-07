@@ -102,12 +102,12 @@ type Config struct {
 }
 
 type ProfileConfig struct {
-	Name         string
-	QueueURL     string `yaml:"queueURL"`
-	ConfigSource string `yaml:"configSource"`
-	Format       string
-	ContextKey   *string `yaml:"contextKey"`
-	SubsetKey    *string `yaml:"subsetKey"`
+	Name         string  `yaml:"name"`
+	QueueURL     string  `yaml:"queue_url"`
+	ConfigSource string  `yaml:"config_source"`
+	Format       string  `yaml:"format"`
+	ContextKey   *string `yaml:"context_key"`
+	SubsetKey    *string `yaml:"subset_key"`
 }
 
 func (pc *ProfileConfig) validateMessageFormat() (MessageFormat, error) {
@@ -150,7 +150,7 @@ func (pc *ProfileConfig) validateContextKey(format MessageFormat) error {
 }
 
 func (pc *ProfileConfig) validateSubsetKey(format MessageFormat) error {
-	if format != JSON && pc.ContextKey != nil {
+	if format != JSON && pc.SubsetKey != nil {
 		return errSubsetKeyCannotBeUsed
 	}
 
