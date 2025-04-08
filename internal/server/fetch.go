@@ -1,0 +1,109 @@
+package server
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	t "github.com/dhth/cueitup/internal/types"
+)
+
+const (
+	contentType     = "Content-Type"
+	applicationJSON = "application/json; charset=utf-8"
+	unexpected      = "something unexpected happened (let @dhth know about this via https://github.com/dhth/cueitup/issues)"
+)
+
+type KafkaMessage struct {
+	Key       string  `json:"key"`
+	Offset    int64   `json:"offset"`
+	Partition int32   `json:"partition"`
+	Metadata  string  `json:"metadata"`
+	Value     *string `json:"value"`
+	Tombstone bool    `json:"tombstone"`
+	Err       error   `json:"error"`
+}
+
+func getMessages(client *sqs.Client, config t.Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		queryParams := r.URL.Query()
+		numMessagesStr := queryParams.Get("num")
+
+		numMessages := 1
+		if numMessagesStr != "" {
+			num, err := strconv.Atoi(numMessagesStr)
+			if err == nil && num > 1 {
+				numMessages = num
+			}
+		}
+		if numMessages > 10 {
+			numMessages = 10
+		}
+
+		result, err := client.ReceiveMessage(context.TODO(),
+			&sqs.ReceiveMessageInput{
+				QueueUrl:            aws.String(config.QueueURL),
+				MaxNumberOfMessages: int32(numMessages),
+				WaitTimeSeconds:     0,
+				VisibilityTimeout:   30,
+			})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to fetch messages: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		messages := make([]t.Message, len(result.Messages))
+		for i, message := range result.Messages {
+			messages[i] = t.GetMessageData(&message, config)
+		}
+
+		if len(messages) > 0 {
+			deleteEntries := make([]sqstypes.DeleteMessageBatchRequestEntry, len(messages))
+			for i := range result.Messages {
+				deleteEntries[i].Id = aws.String(fmt.Sprintf("%v", i))
+				deleteEntries[i].ReceiptHandle = result.Messages[i].ReceiptHandle
+			}
+			_, err = client.DeleteMessageBatch(context.TODO(),
+				&sqs.DeleteMessageBatchInput{
+					Entries:  deleteEntries,
+					QueueUrl: aws.String(config.QueueURL),
+				})
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to delete messages on SQS: %s", err.Error()), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		jsonBytes, err := json.Marshal(messages)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode JSON: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set(contentType, applicationJSON)
+		if _, err := w.Write(jsonBytes); err != nil {
+			log.Printf("failed to write bytes to HTTP connection: %s", err.Error())
+		}
+	}
+}
+
+func getConfig(config t.Config) func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		jsonBytes, err := json.Marshal(config)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode JSON: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set(contentType, applicationJSON)
+		if _, err := w.Write(jsonBytes); err != nil {
+			log.Printf("failed to write bytes to HTTP connection: %s", err.Error())
+		}
+	}
+}

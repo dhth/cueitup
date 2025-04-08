@@ -3,8 +3,7 @@ package ui
 import "github.com/charmbracelet/lipgloss"
 
 const (
-	defaultBackgroundColor = "#282828"
-	listColor              = "#fe8019"
+	defaultForegroundColor = "#282828"
 	activeHeaderColor      = "#fe8019"
 	inactivePaneColor      = "#928374"
 	listPaneBorderColor    = "#3c3836"
@@ -12,13 +11,18 @@ const (
 	helpViewTitleColor     = "#83a598"
 	helpHeaderColor        = "#83a598"
 	helpSectionColor       = "#fabd2f"
+	cueitupColor           = "#d3869b"
+	persistingColor        = "#fb4934"
+	deletingMsgsColor      = "#d3869b"
+	skippingColor          = "#fabd2f"
+	pollingColor           = "#928374"
 )
 
 var (
 	baseStyle = lipgloss.NewStyle().
 			PaddingLeft(1).
 			PaddingRight(1).
-			Foreground(lipgloss.Color("#282828"))
+			Foreground(lipgloss.Color(defaultForegroundColor))
 
 	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
 
@@ -43,7 +47,7 @@ var (
 	modeStyle = baseStyle.
 			Align(lipgloss.Center).
 			Bold(true).
-			Background(lipgloss.Color("#b8bb26"))
+			Background(lipgloss.Color(cueitupColor))
 
 	msgValueTitleStyle = baseStyle.
 				Bold(true).
@@ -52,19 +56,19 @@ var (
 
 	persistingStyle = baseStyle.
 			Bold(true).
-			Foreground(lipgloss.Color("#fb4934"))
+			Foreground(lipgloss.Color(persistingColor))
 
 	deletingMsgsStyle = baseStyle.
 				Bold(true).
-				Foreground(lipgloss.Color("#d3869b"))
+				Foreground(lipgloss.Color(deletingMsgsColor))
 
 	skippingStyle = baseStyle.
 			Bold(true).
-			Foreground(lipgloss.Color("#fabd2f"))
+			Foreground(lipgloss.Color(skippingColor))
 
 	pollingMsgStyle = baseStyle.
 			Bold(true).
-			Foreground(lipgloss.Color("#928374"))
+			Foreground(lipgloss.Color(pollingColor))
 
 	helpMsgStyle = baseStyle.
 			Bold(true).

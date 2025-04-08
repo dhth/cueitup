@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	t "github.com/dhth/cueitup/internal/types"
 )
 
 type (
@@ -9,11 +10,10 @@ type (
 	HideHelpMsg     struct{}
 )
 
-type SQSMsgFetchedMsg struct {
-	messages      []types.Message
-	messageValues []string
-	keyValues     []string
-	err           error
+type SQSMsgsFetchedMsg struct {
+	messages    []t.Message
+	sqsMessages []sqsTypes.Message
+	err         error
 }
 
 type QueueMsgCountFetchedMsg struct {

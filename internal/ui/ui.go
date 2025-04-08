@@ -15,7 +15,7 @@ var errFailedToConfigureDebugging = errors.New("failed to configure debugging")
 func RenderUI(
 	sqsClient *sqs.Client,
 	queueURL string,
-	profile t.Profile,
+	config t.Config,
 	behaviours t.Behaviours,
 ) error {
 	if len(os.Getenv("DEBUG")) > 0 {
@@ -25,7 +25,7 @@ func RenderUI(
 		}
 		defer f.Close()
 	}
-	p := tea.NewProgram(InitialModel(sqsClient, queueURL, profile, behaviours), tea.WithAltScreen())
+	p := tea.NewProgram(InitialModel(sqsClient, queueURL, config, behaviours), tea.WithAltScreen())
 	_, err := p.Run()
 	return err
 }

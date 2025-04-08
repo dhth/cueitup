@@ -7,3 +7,4 @@ cosign.key
 cosign.pub
 .quickrun
 justfile
+internal/server/_client/build

@@ -12,8 +12,8 @@ func newAppItemDelegate() list.DefaultDelegate {
 
 	d.Styles.SelectedTitle = d.Styles.
 		SelectedTitle.
-		Foreground(lipgloss.Color(listColor)).
-		BorderLeftForeground(lipgloss.Color(listColor))
+		Foreground(lipgloss.Color(cueitupColor)).
+		BorderLeftForeground(lipgloss.Color(cueitupColor))
 	d.Styles.SelectedDesc = d.Styles.
 		SelectedTitle
 

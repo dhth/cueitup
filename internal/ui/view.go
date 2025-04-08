@@ -51,8 +51,8 @@ func (m Model) View() string {
 		mode += " " + skippingStyle.Render("skipping msgs!")
 	}
 
-	if m.filterMessages && len(m.contextSearchValues) > 0 {
-		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", m.profile.ContextKey, m.contextSearchValues))
+	if m.filterMessages && len(m.contextSearchValues) > 0 && m.config.ContextKey != nil {
+		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", *m.config.ContextKey, m.contextSearchValues))
 	}
 
 	var errorMsg string
