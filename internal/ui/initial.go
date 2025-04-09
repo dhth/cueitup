@@ -16,8 +16,8 @@ import (
 func InitialModel(
 	sqsClient *sqs.Client,
 	queueURL string,
-	profile t.Profile,
-	behaviours t.Behaviours,
+	config t.Config,
+	behaviours t.TUIBehaviours,
 ) Model {
 	appDelegate := newAppItemDelegate()
 	jobItems := make([]list.Item, 0)
@@ -29,7 +29,9 @@ func InitialModel(
 	persistDir := fmt.Sprintf("messages/%s/%s", queueName, timeString)
 
 	ti := textinput.New()
-	ti.Prompt = fmt.Sprintf("Filter messages where %s in > ", profile.ContextKey)
+	if config.ContextKey != nil {
+		ti.Prompt = fmt.Sprintf("Filter messages where %s in > ", *config.ContextKey)
+	}
 	ti.Focus()
 	ti.CharLimit = 100
 	ti.Width = 100
@@ -42,10 +44,10 @@ func InitialModel(
 	m := Model{
 		sqsClient:            sqsClient,
 		queueURL:             queueURL,
-		profile:              profile,
+		config:               config,
 		behaviours:           behaviours,
 		pollForQueueMsgCount: true,
-		msgsList:             list.New(jobItems, appDelegate, listWidth+10, 0),
+		msgsList:             list.New(jobItems, appDelegate, listWidth, 0),
 		recordValueStore:     make(map[string]string),
 		persistDir:           persistDir,
 		contextSearchInput:   ti,
@@ -59,8 +61,8 @@ func InitialModel(
 	m.msgsList.DisableQuitKeybindings()
 	m.msgsList.SetShowHelp(false)
 	m.msgsList.Styles.Title = m.msgsList.Styles.Title.
-		Background(lipgloss.Color(listColor)).
-		Foreground(lipgloss.Color(defaultBackgroundColor)).
+		Background(lipgloss.Color(cueitupColor)).
+		Foreground(lipgloss.Color(defaultForegroundColor)).
 		Bold(true)
 
 	return m

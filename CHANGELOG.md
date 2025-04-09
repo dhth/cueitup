@@ -10,5 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add support for profiles
+- Add web interface
 
 [unreleased]: https://github.com/dhth/cueitup/compare/v0.2.2...HEAD

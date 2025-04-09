@@ -13,10 +13,6 @@ to your local filesystem.
   <img src="./assets/cueitup.gif?raw=true" alt="Usage" />
 </p>
 
-Demo video:
-
-[![Demo Video](https://img.youtube.com/vi/95HsXNUL4J4/0.jpg)](https://www.youtube.com/watch?v=95HsXNUL4J4)
-
 Install
 ---
 
@@ -142,11 +138,6 @@ Message Value View
    [,h                            Show details for the previous entry in the list
    ],l                            Show details for the next entry in the list
 ```
-
-TODO
----
-
-- [ ] Add ability to only save records with a chosen set of keys
 
 Acknowledgements
 ---

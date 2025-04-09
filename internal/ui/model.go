@@ -25,8 +25,8 @@ const msgCountTickInterval = time.Second * 3
 type Model struct {
 	sqsClient            *sqs.Client
 	queueURL             string
-	profile              t.Profile
-	behaviours           t.Behaviours
+	config               t.Config
+	behaviours           t.TUIBehaviours
 	activeView           stateView
 	lastView             stateView
 	pollForQueueMsgCount bool

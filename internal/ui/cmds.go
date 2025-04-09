@@ -11,17 +11,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	tea "github.com/charmbracelet/bubbletea"
 	t "github.com/dhth/cueitup/internal/types"
-	"github.com/dhth/cueitup/internal/utils"
 )
 
 func (m Model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 	return func() tea.Msg {
-		var messages []types.Message
-		var messagesValues []string
-		var keyValues []string
 		result, err := m.sqsClient.ReceiveMessage(context.TODO(),
 			// WaitTimeSeconds > 0 enables long polling
 			// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html#sqs-long-polling
@@ -32,33 +28,28 @@ func (m Model) FetchMessages(maxMessages int32, waitTime int32) tea.Cmd {
 				VisibilityTimeout:   30,
 			})
 		if err != nil {
-			return SQSMsgFetchedMsg{
-				messages: nil,
-				err:      err,
+			return SQSMsgsFetchedMsg{
+				err: err,
 			}
 		}
-		messages = result.Messages
-		for _, message := range messages {
-			msgValue, keyValue, _ := utils.GetMessageData(&message, m.profile)
-			messagesValues = append(messagesValues, msgValue)
-			keyValues = append(keyValues, keyValue)
+		messages := make([]t.Message, len(result.Messages))
+		for i, message := range result.Messages {
+			messages[i] = t.GetMessageData(&message, m.config)
 		}
 
-		return SQSMsgFetchedMsg{
-			messages:      messages,
-			messageValues: messagesValues,
-			keyValues:     keyValues,
-			err:           nil,
+		return SQSMsgsFetchedMsg{
+			messages:    messages,
+			sqsMessages: result.Messages,
 		}
 	}
 }
 
-func DeleteMessages(client *sqs.Client, queueURL string, messages []types.Message) tea.Cmd {
+func DeleteMessages(client *sqs.Client, queueURL string, messages []sqstypes.Message) tea.Cmd {
 	return func() tea.Msg {
-		entries := make([]types.DeleteMessageBatchRequestEntry, len(messages))
-		for msgIndex := range messages {
-			entries[msgIndex].Id = aws.String(fmt.Sprintf("%v", msgIndex))
-			entries[msgIndex].ReceiptHandle = messages[msgIndex].ReceiptHandle
+		entries := make([]sqstypes.DeleteMessageBatchRequestEntry, len(messages))
+		for i := range messages {
+			entries[i].Id = aws.String(fmt.Sprintf("%v", i))
+			entries[i].ReceiptHandle = messages[i].ReceiptHandle
 		}
 		_, err := client.DeleteMessageBatch(context.TODO(),
 			&sqs.DeleteMessageBatchInput{
@@ -77,11 +68,11 @@ func DeleteMessages(client *sqs.Client, queueURL string, messages []types.Messag
 
 func GetQueueMsgCount(client *sqs.Client, queueURL string) tea.Cmd {
 	return func() tea.Msg {
-		approxMsgCountType := types.QueueAttributeNameApproximateNumberOfMessages
+		approxMsgCountType := sqstypes.QueueAttributeNameApproximateNumberOfMessages
 		attribute, err := client.GetQueueAttributes(context.TODO(),
 			&sqs.GetQueueAttributesInput{
 				QueueUrl:       aws.String(queueURL),
-				AttributeNames: []types.QueueAttributeName{approxMsgCountType},
+				AttributeNames: []sqstypes.QueueAttributeName{approxMsgCountType},
 			})
 		if err != nil {
 			return QueueMsgCountFetchedMsg{

@@ -190,40 +190,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case HideHelpMsg:
 		m.showHelpIndicator = false
 
-	case SQSMsgFetchedMsg:
+	case SQSMsgsFetchedMsg:
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
 			if !m.behaviours.SkipMessages {
-				vPresenceMap := make(map[string]bool)
-				if m.filterMessages && len(m.contextSearchValues) > 0 {
-					for _, p := range m.contextSearchValues {
-						vPresenceMap[p] = true
-					}
-				}
-				for i, message := range msg.messages {
-					// only save/persist values that are requested to be filtered
-					// nolint: staticcheck
-					if m.filterMessages && !(msg.keyValues[i] != "" && vPresenceMap[msg.keyValues[i]]) {
-						continue
-					}
-
-					m.msgsList.InsertItem(len(m.msgsList.Items()),
-						msgItem{
-							message:         message,
-							messageValue:    msg.messageValues[i],
-							contextKeyName:  m.profile.ContextKey,
-							contextKeyValue: msg.keyValues[i],
-						},
-					)
-					m.recordValueStore[*message.MessageId] = msg.messageValues[i]
+				for _, message := range msg.messages {
+					m.msgsList.InsertItem(len(m.msgsList.Items()), message)
+					m.recordValueStore[message.ID] = message.Body
 
 					if m.behaviours.PersistMessages {
 						cmds = append(cmds,
 							saveMessageToDisk(
-								*message.MessageId,
-								msg.messageValues[i],
-								m.profile.Format,
+								message.ID,
+								message.Body,
+								m.config.Format,
 								m.persistDir,
 							),
 						)
@@ -234,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds,
 						DeleteMessages(m.sqsClient,
 							m.queueURL,
-							msg.messages),
+							msg.sqsMessages),
 					)
 				}
 
@@ -243,7 +224,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if selected != nil {
 						recordValue, ok := m.recordValueStore[selected.FilterValue()]
 						if ok {
-							switch m.profile.Format {
+							switch m.config.Format {
 							case t.JSON:
 								result := string(pretty.Color([]byte(recordValue), nil))
 								m.msgValueVP.SetContent(result)
@@ -257,7 +238,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case MsgChosenMsg:
-		switch m.profile.Format {
+		switch m.config.Format {
 		case t.JSON:
 			result := string(pretty.Color([]byte(m.recordValueStore[msg.key]), nil))
 			m.msgValueVP.SetContent(result)

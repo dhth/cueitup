@@ -7,7 +7,7 @@ import (
 	"github.com/dhth/cueitup/internal/utils"
 )
 
-var listWidth = 50
+var listWidth = 54
 
 func (m Model) View() string {
 	var content string
@@ -26,9 +26,9 @@ func (m Model) View() string {
 
 	switch m.activeView {
 	case msgsListView:
-		m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(activeHeaderColor))
+		m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(cueitupColor))
 	case msgValueView:
-		msgValVPTitleStyle = msgValVPTitleStyle.Background(lipgloss.Color(activeHeaderColor))
+		msgValVPTitleStyle = msgValVPTitleStyle.Background(lipgloss.Color(cueitupColor))
 	case contextualSearchView:
 		statusBar = m.contextSearchInput.View()
 	}
@@ -51,8 +51,8 @@ func (m Model) View() string {
 		mode += " " + skippingStyle.Render("skipping msgs!")
 	}
 
-	if m.filterMessages && len(m.contextSearchValues) > 0 {
-		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", m.profile.ContextKey, m.contextSearchValues))
+	if m.filterMessages && len(m.contextSearchValues) > 0 && m.config.ContextKey != nil {
+		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", *m.config.ContextKey, m.contextSearchValues))
 	}
 
 	var errorMsg string

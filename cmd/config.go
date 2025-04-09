@@ -16,9 +16,9 @@ var (
 	errProfileConfigInvalid = errors.New("profile config is invalid")
 )
 
-func getProfile(configBytes []byte, profileName string) (t.Profile, error) {
-	var cfg t.Config
-	var zero t.Profile
+func getProfile(configBytes []byte, profileName string) (t.Config, error) {
+	var cfg t.CueitupConfig
+	var zero t.Config
 
 	err := yaml.Unmarshal(configBytes, &cfg)
 	if err != nil {
