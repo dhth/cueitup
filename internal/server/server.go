@@ -22,6 +22,7 @@ var (
 func Serve(
 	sqsClient *sqs.Client,
 	config t.Config,
+	initialBehaviours t.WebBehaviours,
 	open bool,
 ) error {
 	mux := http.NewServeMux()
@@ -31,7 +32,9 @@ func Serve(
 	mux.HandleFunc("GET /priv/static/cueitup.css", getCSS)
 	mux.HandleFunc("GET /priv/static/cueitup.mjs", getJS)
 	mux.HandleFunc("GET /api/config", getConfig(config))
+	mux.HandleFunc("GET /api/behaviours", getBehaviours(initialBehaviours))
 	mux.HandleFunc("GET /api/fetch", getMessages(sqsClient, config))
+	mux.HandleFunc("GET /api/message-count", getMessageCount(sqsClient, config))
 	muxWithCors := corsMiddleware(mux)
 
 	port, ok := findOpenPort(startPort, endPort)

@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/list
 import gleam/option
 import gleam/string
@@ -40,7 +41,7 @@ fn messages_section_empty(height_class: String) -> element.Element(Msg) {
       attribute.class(
         "mt-4 "
         <> height_class
-        <> " flex border-2 border-[#928374] border-opacity-20 items-center flex justify-center",
+        <> " flex border-2 border-[#928374] border-opacity-20 items-center flex justify-center overflow-auto",
       ),
     ],
     [
@@ -112,7 +113,12 @@ fn messages_section_with_messages(
             [],
             model.messages
               |> list.index_map(fn(m, i) {
-                message_list_item(m, i, current_index, model.select_on_hover)
+                message_list_item(
+                  m,
+                  i,
+                  current_index,
+                  model.behaviours.select_on_hover,
+                )
               }),
           ),
         ]),
@@ -167,7 +173,7 @@ fn message_details_pane(model: Model) -> element.Element(Msg) {
     option.None ->
       html.p([attribute.class("text-[#928374]")], [
         html.text(
-          case model.select_on_hover {
+          case model.behaviours.select_on_hover {
             True -> "Hover on"
             False -> "Select"
           }
@@ -192,8 +198,7 @@ fn message_details_pane(model: Model) -> element.Element(Msg) {
 
 fn controls_section(model: Model) -> element.Element(Msg) {
   case model.config {
-    option.Some(c) ->
-      controls_div_with_config(c, model.fetching, model.select_on_hover)
+    option.Some(c) -> controls_div_with_config(model, c)
     option.None -> controls_div_when_no_config()
   }
 }
@@ -221,9 +226,8 @@ fn controls_div_when_no_config() -> element.Element(Msg) {
 }
 
 fn controls_div_with_config(
+  model: Model,
   config: Config,
-  fetching: Bool,
-  select_on_hover: Bool,
 ) -> element.Element(Msg) {
   html.div([attribute.class("flex items-center space-x-2 mt-4")], [
     html.button(
@@ -249,7 +253,7 @@ fn controls_div_with_config(
         attribute.class(
           "font-semibold px-4 py-1 bg-[#83a598] text-[#282828] hover:bg-[#fabd2f]",
         ),
-        attribute.disabled(fetching),
+        attribute.disabled(model.fetching),
         event.on_click(types.FetchMessages(1)),
       ],
       [element.text("Fetch next")],
@@ -259,7 +263,7 @@ fn controls_div_with_config(
         attribute.class(
           "font-semibold px-4 py-1 bg-[#83a598] text-[#282828] hover:bg-[#fabd2f]",
         ),
-        attribute.disabled(fetching),
+        attribute.disabled(model.fetching),
         event.on_click(types.FetchMessages(10)),
       ],
       [element.text("Fetch multiple")],
@@ -269,29 +273,93 @@ fn controls_div_with_config(
         attribute.class(
           "font-semibold px-4 py-1 bg-[#bdae93] text-[#282828] hover:bg-[#fabd2f]",
         ),
-        attribute.disabled(fetching),
+        attribute.disabled(model.fetching),
         event.on_click(types.ClearMessages),
       ],
       [element.text("Clear Messages")],
     ),
     html.div(
-      [attribute.class("font-semibold px-4 py-1 flex items-center space-x-2")],
       [
-        html.label(
-          [
-            attribute.class("cursor-pointer"),
-            attribute.for("hover-control-input"),
-          ],
-          [element.text("select on hover")],
+        attribute.class(
+          "border-2 border-[#928374] border-opacity-40 border-dashed font-semibold px-4 py-1 flex items-center space-x-4",
         ),
-        html.input([
-          attribute.class(
-            "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer",
+      ],
+      [
+        html.div([attribute.class("flex items-center space-x-2")], [
+          html.label(
+            [
+              attribute.class("cursor-pointer"),
+              attribute.for("hover-control-input"),
+            ],
+            [element.text("select on hover")],
           ),
-          attribute.id("hover-control-input"),
-          attribute.type_("checkbox"),
-          event.on_check(types.HoverSettingsChanged),
-          attribute.checked(select_on_hover),
+          html.input([
+            attribute.class(
+              "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer",
+            ),
+            attribute.id("hover-control-input"),
+            attribute.type_("checkbox"),
+            event.on_check(types.HoverSettingsChanged),
+            attribute.checked(model.behaviours.select_on_hover),
+          ]),
+        ]),
+        html.div([attribute.class("flex items-center space-x-2")], [
+          html.label(
+            [
+              attribute.class("cursor-pointer"),
+              attribute.for("hover-control-input"),
+            ],
+            [element.text("delete")],
+          ),
+          html.input([
+            attribute.class(
+              "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer",
+            ),
+            attribute.id("delete-messages"),
+            attribute.type_("checkbox"),
+            event.on_check(types.DeleteSettingsChanged),
+            attribute.checked(model.behaviours.delete_messages),
+          ]),
+        ]),
+        html.div([attribute.class("flex items-center space-x-2")], [
+          html.div([attribute.class("relative group")], [
+            html.label(
+              [
+                attribute.class("cursor-pointer"),
+                attribute.for("show-live-count"),
+              ],
+              [element.text("live count")],
+            ),
+            html.div(
+              [
+                attribute.class(
+                  "absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-[#928374] text-[#282828] text-sm px-2 py-1 min-w-[250px]",
+                ),
+              ],
+              [html.text("Message count may fluctuate a bit, that's normal")],
+            ),
+          ]),
+          html.input([
+            attribute.class(
+              "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer",
+            ),
+            attribute.id("show-live-count"),
+            attribute.type_("checkbox"),
+            event.on_check(types.ShowLiveCountChanged),
+            attribute.checked(model.behaviours.show_live_count),
+          ]),
+          case model.message_count, model.behaviours.show_live_count {
+            option.Some(c), True ->
+              html.p([], [
+                element.text(
+                  "("
+                  <> c
+                  |> int.to_string
+                  <> " available)",
+                ),
+              ])
+            _, _ -> element.none()
+          },
         ]),
       ],
     ),

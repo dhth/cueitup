@@ -1,4 +1,4 @@
-import effects.{fetch_config}
+import effects.{fetch_behaviours, fetch_config}
 import lustre
 import lustre/effect
 import model.{type Model, init_model}
@@ -12,5 +12,5 @@ pub fn main() {
 }
 
 fn init(_) -> #(Model, effect.Effect(Msg)) {
-  #(init_model(), fetch_config())
+  #(init_model(), effect.batch([fetch_config(), fetch_behaviours()]))
 }

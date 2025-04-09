@@ -17,7 +17,7 @@ func InitialModel(
 	sqsClient *sqs.Client,
 	queueURL string,
 	config t.Config,
-	behaviours t.Behaviours,
+	behaviours t.TUIBehaviours,
 ) Model {
 	appDelegate := newAppItemDelegate()
 	jobItems := make([]list.Item, 0)

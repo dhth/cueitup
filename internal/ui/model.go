@@ -26,7 +26,7 @@ type Model struct {
 	sqsClient            *sqs.Client
 	queueURL             string
 	config               t.Config
-	behaviours           t.Behaviours
+	behaviours           t.TUIBehaviours
 	activeView           stateView
 	lastView             stateView
 	pollForQueueMsgCount bool

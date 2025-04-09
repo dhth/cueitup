@@ -274,9 +274,9 @@ var Result = class _Result extends CustomType {
   }
 };
 var Ok = class extends Result {
-  constructor(value) {
+  constructor(value2) {
     super();
-    this[0] = value;
+    this[0] = value2;
   }
   // @internal
   isOk() {
@@ -440,9 +440,9 @@ function hashObject(o) {
   const proto = Object.getPrototypeOf(o);
   if (proto !== null && typeof proto.hashCode === "function") {
     try {
-      const code = o.hashCode(o);
-      if (typeof code === "number") {
-        return code;
+      const code2 = o.hashCode(o);
+      if (typeof code2 === "number") {
+        return code2;
       }
     } catch {
     }
@@ -591,17 +591,17 @@ function createNode(shift, key1, val1, key2hash, key2, val2) {
     addedLeaf
   );
 }
-function assoc(root, shift, hash, key, val, addedLeaf) {
+function assoc(root, shift, hash, key2, val, addedLeaf) {
   switch (root.type) {
     case ARRAY_NODE:
-      return assocArray(root, shift, hash, key, val, addedLeaf);
+      return assocArray(root, shift, hash, key2, val, addedLeaf);
     case INDEX_NODE:
-      return assocIndex(root, shift, hash, key, val, addedLeaf);
+      return assocIndex(root, shift, hash, key2, val, addedLeaf);
     case COLLISION_NODE:
-      return assocCollision(root, shift, hash, key, val, addedLeaf);
+      return assocCollision(root, shift, hash, key2, val, addedLeaf);
   }
 }
-function assocArray(root, shift, hash, key, val, addedLeaf) {
+function assocArray(root, shift, hash, key2, val, addedLeaf) {
   const idx = mask(hash, shift);
   const node = root.array[idx];
   if (node === void 0) {
@@ -609,11 +609,11 @@ function assocArray(root, shift, hash, key, val, addedLeaf) {
     return {
       type: ARRAY_NODE,
       size: root.size + 1,
-      array: cloneAndSet(root.array, idx, { type: ENTRY, k: key, v: val })
+      array: cloneAndSet(root.array, idx, { type: ENTRY, k: key2, v: val })
     };
   }
   if (node.type === ENTRY) {
-    if (isEqual(key, node.k)) {
+    if (isEqual(key2, node.k)) {
       if (val === node.v) {
         return root;
       }
@@ -622,7 +622,7 @@ function assocArray(root, shift, hash, key, val, addedLeaf) {
         size: root.size,
         array: cloneAndSet(root.array, idx, {
           type: ENTRY,
-          k: key,
+          k: key2,
           v: val
         })
       };
@@ -634,11 +634,11 @@ function assocArray(root, shift, hash, key, val, addedLeaf) {
       array: cloneAndSet(
         root.array,
         idx,
-        createNode(shift + SHIFT, node.k, node.v, hash, key, val)
+        createNode(shift + SHIFT, node.k, node.v, hash, key2, val)
       )
     };
   }
-  const n = assoc(node, shift + SHIFT, hash, key, val, addedLeaf);
+  const n = assoc(node, shift + SHIFT, hash, key2, val, addedLeaf);
   if (n === node) {
     return root;
   }
@@ -648,13 +648,13 @@ function assocArray(root, shift, hash, key, val, addedLeaf) {
     array: cloneAndSet(root.array, idx, n)
   };
 }
-function assocIndex(root, shift, hash, key, val, addedLeaf) {
+function assocIndex(root, shift, hash, key2, val, addedLeaf) {
   const bit = bitpos(hash, shift);
   const idx = index(root.bitmap, bit);
   if ((root.bitmap & bit) !== 0) {
     const node = root.array[idx];
     if (node.type !== ENTRY) {
-      const n = assoc(node, shift + SHIFT, hash, key, val, addedLeaf);
+      const n = assoc(node, shift + SHIFT, hash, key2, val, addedLeaf);
       if (n === node) {
         return root;
       }
@@ -665,7 +665,7 @@ function assocIndex(root, shift, hash, key, val, addedLeaf) {
       };
     }
     const nodeKey = node.k;
-    if (isEqual(key, nodeKey)) {
+    if (isEqual(key2, nodeKey)) {
       if (val === node.v) {
         return root;
       }
@@ -674,7 +674,7 @@ function assocIndex(root, shift, hash, key, val, addedLeaf) {
         bitmap: root.bitmap,
         array: cloneAndSet(root.array, idx, {
           type: ENTRY,
-          k: key,
+          k: key2,
           v: val
         })
       };
@@ -686,7 +686,7 @@ function assocIndex(root, shift, hash, key, val, addedLeaf) {
       array: cloneAndSet(
         root.array,
         idx,
-        createNode(shift + SHIFT, nodeKey, node.v, hash, key, val)
+        createNode(shift + SHIFT, nodeKey, node.v, hash, key2, val)
       )
     };
   } else {
@@ -694,7 +694,7 @@ function assocIndex(root, shift, hash, key, val, addedLeaf) {
     if (n >= MAX_INDEX_NODE) {
       const nodes = new Array(32);
       const jdx = mask(hash, shift);
-      nodes[jdx] = assocIndex(EMPTY, shift + SHIFT, hash, key, val, addedLeaf);
+      nodes[jdx] = assocIndex(EMPTY, shift + SHIFT, hash, key2, val, addedLeaf);
       let j = 0;
       let bitmap = root.bitmap;
       for (let i = 0; i < 32; i++) {
@@ -712,7 +712,7 @@ function assocIndex(root, shift, hash, key, val, addedLeaf) {
     } else {
       const newArray = spliceIn(root.array, idx, {
         type: ENTRY,
-        k: key,
+        k: key2,
         v: val
       });
       addedLeaf.val = true;
@@ -724,9 +724,9 @@ function assocIndex(root, shift, hash, key, val, addedLeaf) {
     }
   }
 }
-function assocCollision(root, shift, hash, key, val, addedLeaf) {
+function assocCollision(root, shift, hash, key2, val, addedLeaf) {
   if (hash === root.hash) {
-    const idx = collisionIndexOf(root, key);
+    const idx = collisionIndexOf(root, key2);
     if (idx !== -1) {
       const entry = root.array[idx];
       if (entry.v === val) {
@@ -735,7 +735,7 @@ function assocCollision(root, shift, hash, key, val, addedLeaf) {
       return {
         type: COLLISION_NODE,
         hash,
-        array: cloneAndSet(root.array, idx, { type: ENTRY, k: key, v: val })
+        array: cloneAndSet(root.array, idx, { type: ENTRY, k: key2, v: val })
       };
     }
     const size = root.array.length;
@@ -743,7 +743,7 @@ function assocCollision(root, shift, hash, key, val, addedLeaf) {
     return {
       type: COLLISION_NODE,
       hash,
-      array: cloneAndSet(root.array, size, { type: ENTRY, k: key, v: val })
+      array: cloneAndSet(root.array, size, { type: ENTRY, k: key2, v: val })
     };
   }
   return assoc(
@@ -754,45 +754,45 @@ function assocCollision(root, shift, hash, key, val, addedLeaf) {
     },
     shift,
     hash,
-    key,
+    key2,
     val,
     addedLeaf
   );
 }
-function collisionIndexOf(root, key) {
+function collisionIndexOf(root, key2) {
   const size = root.array.length;
   for (let i = 0; i < size; i++) {
-    if (isEqual(key, root.array[i].k)) {
+    if (isEqual(key2, root.array[i].k)) {
       return i;
     }
   }
   return -1;
 }
-function find(root, shift, hash, key) {
+function find(root, shift, hash, key2) {
   switch (root.type) {
     case ARRAY_NODE:
-      return findArray(root, shift, hash, key);
+      return findArray(root, shift, hash, key2);
     case INDEX_NODE:
-      return findIndex(root, shift, hash, key);
+      return findIndex(root, shift, hash, key2);
     case COLLISION_NODE:
-      return findCollision(root, key);
+      return findCollision(root, key2);
   }
 }
-function findArray(root, shift, hash, key) {
+function findArray(root, shift, hash, key2) {
   const idx = mask(hash, shift);
   const node = root.array[idx];
   if (node === void 0) {
     return void 0;
   }
   if (node.type !== ENTRY) {
-    return find(node, shift + SHIFT, hash, key);
+    return find(node, shift + SHIFT, hash, key2);
   }
-  if (isEqual(key, node.k)) {
+  if (isEqual(key2, node.k)) {
     return node;
   }
   return void 0;
 }
-function findIndex(root, shift, hash, key) {
+function findIndex(root, shift, hash, key2) {
   const bit = bitpos(hash, shift);
   if ((root.bitmap & bit) === 0) {
     return void 0;
@@ -800,31 +800,31 @@ function findIndex(root, shift, hash, key) {
   const idx = index(root.bitmap, bit);
   const node = root.array[idx];
   if (node.type !== ENTRY) {
-    return find(node, shift + SHIFT, hash, key);
+    return find(node, shift + SHIFT, hash, key2);
   }
-  if (isEqual(key, node.k)) {
+  if (isEqual(key2, node.k)) {
     return node;
   }
   return void 0;
 }
-function findCollision(root, key) {
-  const idx = collisionIndexOf(root, key);
+function findCollision(root, key2) {
+  const idx = collisionIndexOf(root, key2);
   if (idx < 0) {
     return void 0;
   }
   return root.array[idx];
 }
-function without(root, shift, hash, key) {
+function without(root, shift, hash, key2) {
   switch (root.type) {
     case ARRAY_NODE:
-      return withoutArray(root, shift, hash, key);
+      return withoutArray(root, shift, hash, key2);
     case INDEX_NODE:
-      return withoutIndex(root, shift, hash, key);
+      return withoutIndex(root, shift, hash, key2);
     case COLLISION_NODE:
-      return withoutCollision(root, key);
+      return withoutCollision(root, key2);
   }
 }
-function withoutArray(root, shift, hash, key) {
+function withoutArray(root, shift, hash, key2) {
   const idx = mask(hash, shift);
   const node = root.array[idx];
   if (node === void 0) {
@@ -832,11 +832,11 @@ function withoutArray(root, shift, hash, key) {
   }
   let n = void 0;
   if (node.type === ENTRY) {
-    if (!isEqual(node.k, key)) {
+    if (!isEqual(node.k, key2)) {
       return root;
     }
   } else {
-    n = without(node, shift + SHIFT, hash, key);
+    n = without(node, shift + SHIFT, hash, key2);
     if (n === node) {
       return root;
     }
@@ -885,7 +885,7 @@ function withoutArray(root, shift, hash, key) {
     array: cloneAndSet(root.array, idx, n)
   };
 }
-function withoutIndex(root, shift, hash, key) {
+function withoutIndex(root, shift, hash, key2) {
   const bit = bitpos(hash, shift);
   if ((root.bitmap & bit) === 0) {
     return root;
@@ -893,7 +893,7 @@ function withoutIndex(root, shift, hash, key) {
   const idx = index(root.bitmap, bit);
   const node = root.array[idx];
   if (node.type !== ENTRY) {
-    const n = without(node, shift + SHIFT, hash, key);
+    const n = without(node, shift + SHIFT, hash, key2);
     if (n === node) {
       return root;
     }
@@ -913,7 +913,7 @@ function withoutIndex(root, shift, hash, key) {
       array: spliceOut(root.array, idx)
     };
   }
-  if (isEqual(key, node.k)) {
+  if (isEqual(key2, node.k)) {
     if (root.bitmap === bit) {
       return void 0;
     }
@@ -925,8 +925,8 @@ function withoutIndex(root, shift, hash, key) {
   }
   return root;
 }
-function withoutCollision(root, key) {
-  const idx = collisionIndexOf(root, key);
+function withoutCollision(root, key2) {
+  const idx = collisionIndexOf(root, key2);
   if (idx < 0) {
     return root;
   }
@@ -1001,11 +1001,11 @@ var Dict = class _Dict {
    * @param {NotFound} notFound
    * @returns {NotFound | V}
    */
-  get(key, notFound) {
+  get(key2, notFound) {
     if (this.root === void 0) {
       return notFound;
     }
-    const found = find(this.root, 0, getHash(key), key);
+    const found = find(this.root, 0, getHash(key2), key2);
     if (found === void 0) {
       return notFound;
     }
@@ -1016,10 +1016,10 @@ var Dict = class _Dict {
    * @param {V} val
    * @returns {Dict<K,V>}
    */
-  set(key, val) {
+  set(key2, val) {
     const addedLeaf = { val: false };
     const root = this.root === void 0 ? EMPTY : this.root;
-    const newRoot = assoc(root, 0, getHash(key), key, val, addedLeaf);
+    const newRoot = assoc(root, 0, getHash(key2), key2, val, addedLeaf);
     if (newRoot === this.root) {
       return this;
     }
@@ -1029,11 +1029,11 @@ var Dict = class _Dict {
    * @param {K} key
    * @returns {Dict<K,V>}
    */
-  delete(key) {
+  delete(key2) {
     if (this.root === void 0) {
       return this;
     }
-    const newRoot = without(this.root, 0, getHash(key), key);
+    const newRoot = without(this.root, 0, getHash(key2), key2);
     if (newRoot === this.root) {
       return this;
     }
@@ -1046,11 +1046,11 @@ var Dict = class _Dict {
    * @param {K} key
    * @returns {boolean}
    */
-  has(key) {
+  has(key2) {
     if (this.root === void 0) {
       return false;
     }
-    return find(this.root, 0, getHash(key), key) !== void 0;
+    return find(this.root, 0, getHash(key2), key2) !== void 0;
   }
   /**
    * @returns {[K,V][]}
@@ -1111,11 +1111,11 @@ function identity(x) {
 function to_string(term) {
   return term.toString();
 }
-function string_length(string5) {
-  if (string5 === "") {
+function string_length(string6) {
+  if (string6 === "") {
     return 0;
   }
-  const iterator = graphemes_iterator(string5);
+  const iterator = graphemes_iterator(string6);
   if (iterator) {
     let i = 0;
     for (const _ of iterator) {
@@ -1123,26 +1123,26 @@ function string_length(string5) {
     }
     return i;
   } else {
-    return string5.match(/./gsu).length;
+    return string6.match(/./gsu).length;
   }
 }
 var segmenter = void 0;
-function graphemes_iterator(string5) {
+function graphemes_iterator(string6) {
   if (globalThis.Intl && Intl.Segmenter) {
     segmenter ||= new Intl.Segmenter();
-    return segmenter.segment(string5)[Symbol.iterator]();
+    return segmenter.segment(string6)[Symbol.iterator]();
   }
 }
-function pop_grapheme(string5) {
+function pop_grapheme(string6) {
   let first2;
-  const iterator = graphemes_iterator(string5);
+  const iterator = graphemes_iterator(string6);
   if (iterator) {
     first2 = iterator.next().value?.segment;
   } else {
-    first2 = string5.match(/./su)?.[0];
+    first2 = string6.match(/./su)?.[0];
   }
   if (first2) {
-    return new Ok([first2, string5.slice(first2.length)]);
+    return new Ok([first2, string6.slice(first2.length)]);
   } else {
     return new Error(Nil);
   }
@@ -1150,8 +1150,8 @@ function pop_grapheme(string5) {
 function pop_codeunit(str) {
   return [str.charCodeAt(0) | 0, str.slice(1)];
 }
-function lowercase(string5) {
-  return string5.toLowerCase();
+function lowercase(string6) {
+  return string6.toLowerCase();
 }
 function concat(xs) {
   let result = "";
@@ -1160,11 +1160,11 @@ function concat(xs) {
   }
   return result;
 }
-function string_slice(string5, idx, len) {
-  if (len <= 0 || idx >= string5.length) {
+function string_slice(string6, idx, len) {
+  if (len <= 0 || idx >= string6.length) {
     return "";
   }
-  const iterator = graphemes_iterator(string5);
+  const iterator = graphemes_iterator(string6);
   if (iterator) {
     while (idx-- > 0) {
       iterator.next();
@@ -1179,7 +1179,7 @@ function string_slice(string5, idx, len) {
     }
     return result;
   } else {
-    return string5.match(/./gsu).slice(idx, idx + len).join("");
+    return string6.match(/./gsu).slice(idx, idx + len).join("");
   }
 }
 function string_codeunit_slice(str, from2, length4) {
@@ -1218,15 +1218,15 @@ function new_map() {
 function map_to_list(map7) {
   return List.fromArray(map7.entries());
 }
-function map_get(map7, key) {
-  const value = map7.get(key, NOT_FOUND);
-  if (value === NOT_FOUND) {
+function map_get(map7, key2) {
+  const value2 = map7.get(key2, NOT_FOUND);
+  if (value2 === NOT_FOUND) {
     return new Error(Nil);
   }
-  return new Ok(value);
+  return new Ok(value2);
 }
-function map_insert(key, value, map7) {
-  return map7.set(key, value);
+function map_insert(key2, value2, map7) {
+  return map7.set(key2, value2);
 }
 function classify_dynamic(data) {
   if (typeof data === "string") {
@@ -1273,30 +1273,30 @@ function decode_int(data) {
 function decode_bool(data) {
   return typeof data === "boolean" ? new Ok(data) : decoder_error("Bool", data);
 }
-function decode_field(value, name) {
-  const not_a_map_error = () => decoder_error("Dict", value);
-  if (value instanceof Dict || value instanceof WeakMap || value instanceof Map) {
-    const entry = map_get(value, name);
+function decode_field(value2, name) {
+  const not_a_map_error = () => decoder_error("Dict", value2);
+  if (value2 instanceof Dict || value2 instanceof WeakMap || value2 instanceof Map) {
+    const entry = map_get(value2, name);
     return new Ok(entry.isOk() ? new Some(entry[0]) : new None());
-  } else if (value === null) {
+  } else if (value2 === null) {
     return not_a_map_error();
-  } else if (Object.getPrototypeOf(value) == Object.prototype) {
-    return try_get_field(value, name, () => new Ok(new None()));
+  } else if (Object.getPrototypeOf(value2) == Object.prototype) {
+    return try_get_field(value2, name, () => new Ok(new None()));
   } else {
-    return try_get_field(value, name, not_a_map_error);
+    return try_get_field(value2, name, not_a_map_error);
   }
 }
-function try_get_field(value, field3, or_else) {
+function try_get_field(value2, field3, or_else) {
   try {
-    return field3 in value ? new Ok(new Some(value[field3])) : or_else();
+    return field3 in value2 ? new Ok(new Some(value2[field3])) : or_else();
   } catch {
     return or_else();
   }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dict.mjs
-function insert(dict2, key, value) {
-  return map_insert(key, value, dict2);
+function insert(dict2, key2, value2) {
+  return map_insert(key2, value2, dict2);
 }
 function from_list_loop(loop$list, loop$initial) {
   while (true) {
@@ -1305,11 +1305,11 @@ function from_list_loop(loop$list, loop$initial) {
     if (list3.hasLength(0)) {
       return initial;
     } else {
-      let key = list3.head[0];
-      let value = list3.head[1];
+      let key2 = list3.head[0];
+      let value2 = list3.head[1];
       let rest = list3.tail;
       loop$list = rest;
-      loop$initial = insert(initial, key, value);
+      loop$initial = insert(initial, key2, value2);
     }
   }
 }
@@ -1337,10 +1337,10 @@ function do_keys_loop(loop$list, loop$acc) {
     if (list3.hasLength(0)) {
       return reverse_and_concat(acc, toList([]));
     } else {
-      let key = list3.head[0];
+      let key2 = list3.head[0];
       let rest = list3.tail;
       loop$list = rest;
-      loop$acc = prepend(key, acc);
+      loop$acc = prepend(key2, acc);
     }
   }
 }
@@ -1463,22 +1463,22 @@ function index_fold(list3, initial, fun) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function slice(string5, idx, len) {
+function slice(string6, idx, len) {
   let $ = len < 0;
   if ($) {
     return "";
   } else {
     let $1 = idx < 0;
     if ($1) {
-      let translated_idx = string_length(string5) + idx;
+      let translated_idx = string_length(string6) + idx;
       let $2 = translated_idx < 0;
       if ($2) {
         return "";
       } else {
-        return string_slice(string5, translated_idx, len);
+        return string_slice(string6, translated_idx, len);
       }
     } else {
-      return string_slice(string5, idx, len);
+      return string_slice(string6, idx, len);
     }
   }
 }
@@ -1487,10 +1487,10 @@ function concat_loop(loop$strings, loop$accumulator) {
     let strings = loop$strings;
     let accumulator = loop$accumulator;
     if (strings.atLeastLength(1)) {
-      let string5 = strings.head;
+      let string6 = strings.head;
       let strings$1 = strings.tail;
       loop$strings = strings$1;
-      loop$accumulator = accumulator + string5;
+      loop$accumulator = accumulator + string6;
     } else {
       return accumulator;
     }
@@ -1507,11 +1507,11 @@ function join_loop(loop$strings, loop$separator, loop$accumulator) {
     if (strings.hasLength(0)) {
       return accumulator;
     } else {
-      let string5 = strings.head;
+      let string6 = strings.head;
       let strings$1 = strings.tail;
       loop$strings = strings$1;
       loop$separator = separator;
-      loop$accumulator = accumulator + separator + string5;
+      loop$accumulator = accumulator + separator + string6;
     }
   }
 }
@@ -1526,19 +1526,19 @@ function join(strings, separator) {
 }
 function drop_start(loop$string, loop$num_graphemes) {
   while (true) {
-    let string5 = loop$string;
+    let string6 = loop$string;
     let num_graphemes = loop$num_graphemes;
     let $ = num_graphemes > 0;
     if (!$) {
-      return string5;
+      return string6;
     } else {
-      let $1 = pop_grapheme(string5);
+      let $1 = pop_grapheme(string6);
       if ($1.isOk()) {
         let string$1 = $1[0][1];
         loop$string = string$1;
         loop$num_graphemes = num_graphemes - 1;
       } else {
-        return string5;
+        return string6;
       }
     }
   }
@@ -1644,10 +1644,10 @@ function push_path(error, name) {
   );
 }
 function field(name, inner_type) {
-  return (value) => {
+  return (value2) => {
     let missing_field_error = new DecodeError("field", "nothing", toList([]));
     return try$(
-      decode_field(value, name),
+      decode_field(value2, name),
       (maybe_inner) => {
         let _pipe = maybe_inner;
         let _pipe$1 = to_result(_pipe, toList([missing_field_error]));
@@ -1664,24 +1664,24 @@ function field(name, inner_type) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam_stdlib_decode_ffi.mjs
-function index2(data, key) {
+function index2(data, key2) {
   if (data instanceof Dict || data instanceof WeakMap || data instanceof Map) {
     const token = {};
-    const entry = data.get(key, token);
+    const entry = data.get(key2, token);
     if (entry === token) return new Ok(new None());
     return new Ok(new Some(entry));
   }
-  const key_is_int = Number.isInteger(key);
-  if (key_is_int && key >= 0 && key < 8 && data instanceof List) {
+  const key_is_int = Number.isInteger(key2);
+  if (key_is_int && key2 >= 0 && key2 < 8 && data instanceof List) {
     let i = 0;
-    for (const value of data) {
-      if (i === key) return new Ok(new Some(value));
+    for (const value2 of data) {
+      if (i === key2) return new Ok(new Some(value2));
       i++;
     }
     return new Error("Indexable");
   }
   if (key_is_int && Array.isArray(data) || data && typeof data === "object" || data && Object.getPrototypeOf(data) === Object.prototype) {
-    if (key in data) return new Ok(new Some(data[key]));
+    if (key2 in data) return new Ok(new Some(data[key2]));
     return new Ok(new None());
   }
   return new Error(key_is_int ? "Indexable" : "Dict");
@@ -1708,7 +1708,7 @@ function int(data) {
   if (Number.isInteger(data)) return new Ok(data);
   return new Error(0);
 }
-function string(data) {
+function string2(data) {
   if (typeof data === "string") return new Ok(data);
   return new Error("");
 }
@@ -1808,6 +1808,11 @@ function optional(inner) {
     }
   );
 }
+function decode_error(expected, found) {
+  return toList([
+    new DecodeError2(expected, classify_dynamic(found), toList([]))
+  ]);
+}
 function run_dynamic_function(data, name, f) {
   let $ = f(data);
   if ($.isOk()) {
@@ -1821,14 +1826,28 @@ function run_dynamic_function(data, name, f) {
     ];
   }
 }
+function decode_bool2(data) {
+  let $ = isEqual(identity(true), data);
+  if ($) {
+    return [true, toList([])];
+  } else {
+    let $1 = isEqual(identity(false), data);
+    if ($1) {
+      return [false, toList([])];
+    } else {
+      return [false, decode_error("Bool", data)];
+    }
+  }
+}
 function decode_int2(data) {
   return run_dynamic_function(data, "Int", int);
 }
+var bool2 = /* @__PURE__ */ new Decoder(decode_bool2);
 var int2 = /* @__PURE__ */ new Decoder(decode_int2);
 function decode_string2(data) {
-  return run_dynamic_function(data, "String", string);
+  return run_dynamic_function(data, "String", string2);
 }
-var string2 = /* @__PURE__ */ new Decoder(decode_string2);
+var string3 = /* @__PURE__ */ new Decoder(decode_string2);
 function list2(inner) {
   return new Decoder(
     (data) => {
@@ -1846,7 +1865,7 @@ function list2(inner) {
 }
 function push_path2(layer, path) {
   let decoder = one_of(
-    string2,
+    string3,
     toList([
       (() => {
         let _pipe = int2;
@@ -1856,8 +1875,8 @@ function push_path2(layer, path) {
   );
   let path$1 = map2(
     path,
-    (key) => {
-      let key$1 = identity(key);
+    (key2) => {
+      let key$1 = identity(key2);
       let $ = run(key$1, decoder);
       if ($.isOk()) {
         let key$2 = $[0];
@@ -1891,18 +1910,18 @@ function index3(loop$path, loop$position, loop$inner, loop$data, loop$handle_mis
       let _pipe = inner(data);
       return push_path2(_pipe, reverse(position));
     } else {
-      let key = path.head;
+      let key2 = path.head;
       let path$1 = path.tail;
-      let $ = index2(data, key);
+      let $ = index2(data, key2);
       if ($.isOk() && $[0] instanceof Some) {
         let data$1 = $[0][0];
         loop$path = path$1;
-        loop$position = prepend(key, position);
+        loop$position = prepend(key2, position);
         loop$inner = inner;
         loop$data = data$1;
         loop$handle_miss = handle_miss;
       } else if ($.isOk() && $[0] instanceof None) {
-        return handle_miss(data, prepend(key, position));
+        return handle_miss(data, prepend(key2, position));
       } else {
         let kind = $[0];
         let $1 = inner(data);
@@ -1957,12 +1976,12 @@ function guard(requirement, consequence, alternative) {
 }
 
 // build/dev/javascript/gleam_json/gleam_json_ffi.mjs
-function decode(string5) {
+function decode(string6) {
   try {
-    const result = JSON.parse(string5);
+    const result = JSON.parse(string6);
     return new Ok(result);
   } catch (err) {
-    return new Error(getJsonDecodeError(err, string5));
+    return new Error(getJsonDecodeError(err, string6));
   }
 }
 function getJsonDecodeError(stdErr, json) {
@@ -2021,11 +2040,11 @@ function jsCoreUnexpectedByteError(err) {
 function toHex(char) {
   return "0x" + char.charCodeAt(0).toString(16).toUpperCase();
 }
-function getPositionFromMultiline(line, column, string5) {
+function getPositionFromMultiline(line, column, string6) {
   if (line === 1) return column - 1;
   let currentLn = 1;
   let position = 0;
-  string5.split("").find((char, idx) => {
+  string6.split("").find((char, idx) => {
     if (char === "\n") currentLn += 1;
     if (currentLn === line) {
       position = idx + column;
@@ -2099,6 +2118,18 @@ function from(effect) {
 function none() {
   return new Effect(toList([]));
 }
+function batch(effects) {
+  return new Effect(
+    fold(
+      effects,
+      toList([]),
+      (b, _use1) => {
+        let a2 = _use1.all;
+        return append(b, a2);
+      }
+    )
+  );
+}
 
 // build/dev/javascript/lustre/lustre/internals/vdom.mjs
 var Text = class extends CustomType {
@@ -2107,10 +2138,10 @@ var Text = class extends CustomType {
     this.content = content;
   }
 };
-var Element = class extends CustomType {
-  constructor(key, namespace, tag, attrs, children2, self_closing, void$) {
+var Element2 = class extends CustomType {
+  constructor(key2, namespace, tag, attrs, children2, self_closing, void$) {
     super();
-    this.key = key;
+    this.key = key2;
     this.namespace = namespace;
     this.tag = tag;
     this.attrs = attrs;
@@ -2133,7 +2164,7 @@ var Attribute = class extends CustomType {
     this.as_property = as_property;
   }
 };
-var Event = class extends CustomType {
+var Event2 = class extends CustomType {
   constructor(x0, x1) {
     super();
     this[0] = x0;
@@ -2150,12 +2181,12 @@ function attribute_to_event_handler(attribute2) {
     return new Ok([name$1, handler]);
   }
 }
-function do_element_list_handlers(elements2, handlers2, key) {
+function do_element_list_handlers(elements2, handlers2, key2) {
   return index_fold(
     elements2,
     handlers2,
     (handlers3, element2, index5) => {
-      let key$1 = key + "-" + to_string(index5);
+      let key$1 = key2 + "-" + to_string(index5);
       return do_handlers(element2, handlers3, key$1);
     }
   );
@@ -2164,14 +2195,14 @@ function do_handlers(loop$element, loop$handlers, loop$key) {
   while (true) {
     let element2 = loop$element;
     let handlers2 = loop$handlers;
-    let key = loop$key;
+    let key2 = loop$key;
     if (element2 instanceof Text) {
       return handlers2;
     } else if (element2 instanceof Map2) {
       let subtree = element2.subtree;
       loop$element = subtree();
       loop$handlers = handlers2;
-      loop$key = key;
+      loop$key = key2;
     } else {
       let attrs = element2.attrs;
       let children2 = element2.children;
@@ -2183,13 +2214,13 @@ function do_handlers(loop$element, loop$handlers, loop$key) {
           if ($.isOk()) {
             let name = $[0][0];
             let handler = $[0][1];
-            return insert(handlers3, key + "-" + name, handler);
+            return insert(handlers3, key2 + "-" + name, handler);
           } else {
             return handlers3;
           }
         }
       );
-      return do_element_list_handlers(children2, handlers$1, key);
+      return do_element_list_handlers(children2, handlers$1, key2);
     }
   }
 }
@@ -2198,14 +2229,14 @@ function handlers(element2) {
 }
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
-function attribute(name, value) {
-  return new Attribute(name, identity(value), false);
+function attribute(name, value2) {
+  return new Attribute(name, identity(value2), false);
 }
-function property(name, value) {
-  return new Attribute(name, identity(value), true);
+function property(name, value2) {
+  return new Attribute(name, identity(value2), true);
 }
 function on(name, handler) {
-  return new Event("on" + name, handler);
+  return new Event2("on" + name, handler);
 }
 function class$(name) {
   return attribute("class", name);
@@ -2231,42 +2262,42 @@ function for$(id2) {
 function href(uri) {
   return attribute("href", uri);
 }
-function target(target2) {
-  return attribute("target", target2);
+function target(target3) {
+  return attribute("target", target3);
 }
 
 // build/dev/javascript/lustre/lustre/element.mjs
 function element(tag, attrs, children2) {
   if (tag === "area") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "base") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "br") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "col") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "embed") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "hr") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "img") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "input") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "link") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "meta") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "param") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "source") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "track") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else if (tag === "wbr") {
-    return new Element("", "", tag, attrs, toList([]), false, true);
+    return new Element2("", "", tag, attrs, toList([]), false, true);
   } else {
-    return new Element("", "", tag, attrs, children2, false, false);
+    return new Element2("", "", tag, attrs, children2, false, false);
   }
 }
 function text(content) {
@@ -2348,7 +2379,7 @@ var Emit2 = class extends CustomType {
     this[1] = x1;
   }
 };
-var Event2 = class extends CustomType {
+var Event3 = class extends CustomType {
   constructor(x0, x1) {
     super();
     this[0] = x0;
@@ -2448,13 +2479,13 @@ function createElementNode({ prev, next, dispatch, stack }) {
   const delegated = [];
   for (const attr of next.attrs) {
     const name = attr[0];
-    const value = attr[1];
+    const value2 = attr[1];
     if (attr.as_property) {
-      if (el[name] !== value) el[name] = value;
+      if (el[name] !== value2) el[name] = value2;
       if (canMorph) prevAttributes.delete(name);
     } else if (name.startsWith("on")) {
       const eventName = name.slice(2);
-      const callback = dispatch(value, eventName === "input");
+      const callback = dispatch(value2, eventName === "input");
       if (!handlersForEl.has(eventName)) {
         el.addEventListener(eventName, lustreGenericEventHandler);
       }
@@ -2467,23 +2498,23 @@ function createElementNode({ prev, next, dispatch, stack }) {
         el.addEventListener(eventName, lustreGenericEventHandler);
       }
       handlersForEl.set(eventName, callback);
-      el.setAttribute(name, value);
+      el.setAttribute(name, value2);
       if (canMorph) {
         prevHandlers.delete(eventName);
         prevAttributes.delete(name);
       }
     } else if (name.startsWith("delegate:data-") || name.startsWith("delegate:aria-")) {
-      el.setAttribute(name, value);
-      delegated.push([name.slice(10), value]);
+      el.setAttribute(name, value2);
+      delegated.push([name.slice(10), value2]);
     } else if (name === "class") {
-      className = className === null ? value : className + " " + value;
+      className = className === null ? value2 : className + " " + value2;
     } else if (name === "style") {
-      style2 = style2 === null ? value : style2 + value;
+      style2 = style2 === null ? value2 : style2 + value2;
     } else if (name === "dangerous-unescaped-html") {
-      innerHTML = value;
+      innerHTML = value2;
     } else {
-      if (el.getAttribute(name) !== value) el.setAttribute(name, value);
-      if (name === "value" || name === "selected") el[name] = value;
+      if (el.getAttribute(name) !== value2) el.setAttribute(name, value2);
+      if (name === "value" || name === "selected") el[name] = value2;
       if (canMorph) prevAttributes.delete(name);
     }
   }
@@ -2507,9 +2538,9 @@ function createElementNode({ prev, next, dispatch, stack }) {
   if (next.tag === "slot") {
     window.queueMicrotask(() => {
       for (const child of el.assignedElements()) {
-        for (const [name, value] of delegated) {
+        for (const [name, value2] of delegated) {
           if (!child.hasAttribute(name)) {
-            child.setAttribute(name, value);
+            child.setAttribute(name, value2);
           }
         }
       }
@@ -2558,14 +2589,14 @@ function createElementNode({ prev, next, dispatch, stack }) {
 }
 var registeredHandlers = /* @__PURE__ */ new WeakMap();
 function lustreGenericEventHandler(event2) {
-  const target2 = event2.currentTarget;
-  if (!registeredHandlers.has(target2)) {
-    target2.removeEventListener(event2.type, lustreGenericEventHandler);
+  const target3 = event2.currentTarget;
+  if (!registeredHandlers.has(target3)) {
+    target3.removeEventListener(event2.type, lustreGenericEventHandler);
     return;
   }
-  const handlersForEventTarget = registeredHandlers.get(target2);
+  const handlersForEventTarget = registeredHandlers.get(target3);
   if (!handlersForEventTarget.has(event2.type)) {
-    target2.removeEventListener(event2.type, lustreGenericEventHandler);
+    target3.removeEventListener(event2.type, lustreGenericEventHandler);
     return;
   }
   handlersForEventTarget.get(event2.type)(event2);
@@ -2605,8 +2636,8 @@ function getKeyedChildren(el) {
   const keyedChildren = /* @__PURE__ */ new Map();
   if (el) {
     for (const child of children(el)) {
-      const key = child?.key || child?.getAttribute?.("data-lustre-key");
-      if (key) keyedChildren.set(key, child);
+      const key2 = child?.key || child?.getAttribute?.("data-lustre-key");
+      if (key2) keyedChildren.set(key2, child);
     }
   }
   return keyedChildren;
@@ -2850,7 +2881,7 @@ var LustreServerApplication = class _LustreServerApplication {
       for (const [_, renderer] of this.#renderers) {
         renderer(event2);
       }
-    } else if (action instanceof Event2) {
+    } else if (action instanceof Event3) {
       const handler = this.#handlers.get(action[0]);
       if (!handler) return;
       const msg = handler(action[1]);
@@ -3559,8 +3590,8 @@ function parse_userinfo_loop(loop$original, loop$uri_string, loop$pieces, loop$s
     }
   }
 }
-function parse_authority_pieces(string5, pieces) {
-  return parse_userinfo_loop(string5, string5, pieces, 0);
+function parse_authority_pieces(string6, pieces) {
+  return parse_userinfo_loop(string6, string6, pieces, 0);
 }
 function parse_authority_with_slashes(uri_string, pieces) {
   if (uri_string === "//") {
@@ -3843,11 +3874,11 @@ function scheme_from_string(scheme) {
 
 // build/dev/javascript/gleam_http/gleam/http/request.mjs
 var Request = class extends CustomType {
-  constructor(method, headers, body, scheme, host, port, path, query) {
+  constructor(method, headers, body2, scheme, host, port, path, query) {
     super();
     this.method = method;
     this.headers = headers;
-    this.body = body;
+    this.body = body2;
     this.scheme = scheme;
     this.host = host;
     this.port = port;
@@ -3904,11 +3935,11 @@ function to(url) {
 
 // build/dev/javascript/gleam_http/gleam/http/response.mjs
 var Response = class extends CustomType {
-  constructor(status, headers, body) {
+  constructor(status, headers, body2) {
     super();
     this.status = status;
     this.headers = headers;
-    this.body = body;
+    this.body = body2;
   }
 };
 
@@ -3917,22 +3948,22 @@ var PromiseLayer = class _PromiseLayer {
   constructor(promise) {
     this.promise = promise;
   }
-  static wrap(value) {
-    return value instanceof Promise ? new _PromiseLayer(value) : value;
+  static wrap(value2) {
+    return value2 instanceof Promise ? new _PromiseLayer(value2) : value2;
   }
-  static unwrap(value) {
-    return value instanceof _PromiseLayer ? value.promise : value;
+  static unwrap(value2) {
+    return value2 instanceof _PromiseLayer ? value2.promise : value2;
   }
 };
-function resolve(value) {
-  return Promise.resolve(PromiseLayer.wrap(value));
+function resolve(value2) {
+  return Promise.resolve(PromiseLayer.wrap(value2));
 }
 function then_await(promise, fn) {
-  return promise.then((value) => fn(PromiseLayer.unwrap(value)));
+  return promise.then((value2) => fn(PromiseLayer.unwrap(value2)));
 }
 function map_promise(promise, fn) {
   return promise.then(
-    (value) => PromiseLayer.wrap(fn(PromiseLayer.unwrap(value)))
+    (value2) => PromiseLayer.wrap(fn(PromiseLayer.unwrap(value2)))
   );
 }
 function rescue(promise, fn) {
@@ -3997,13 +4028,13 @@ function make_headers(headersList) {
   return headers;
 }
 async function read_text_body(response) {
-  let body;
+  let body2;
   try {
-    body = await response.body.text();
+    body2 = await response.body.text();
   } catch (error) {
     return new Error(new UnableToReadBody());
   }
-  return new Ok(response.withFields({ body }));
+  return new Ok(response.withFields({ body: body2 }));
 }
 
 // build/dev/javascript/gleam_fetch/gleam/fetch.mjs
@@ -4104,19 +4135,19 @@ function get(url, expect) {
 function response_to_result(response) {
   if (response instanceof Response && (200 <= response.status && response.status <= 299)) {
     let status = response.status;
-    let body = response.body;
-    return new Ok(body);
+    let body2 = response.body;
+    return new Ok(body2);
   } else if (response instanceof Response && response.status === 401) {
     return new Error(new Unauthorized());
   } else if (response instanceof Response && response.status === 404) {
     return new Error(new NotFound());
   } else if (response instanceof Response && response.status === 500) {
-    let body = response.body;
-    return new Error(new InternalServerError(body));
+    let body2 = response.body;
+    return new Error(new InternalServerError(body2));
   } else {
-    let code = response.status;
-    let body = response.body;
-    return new Error(new OtherError(code, body));
+    let code2 = response.status;
+    let body2 = response.body;
+    return new Error(new OtherError(code2, body2));
   }
 }
 function expect_json(decoder, to_msg) {
@@ -4126,8 +4157,8 @@ function expect_json(decoder, to_msg) {
       let _pipe$1 = then$(_pipe, response_to_result);
       let _pipe$2 = then$(
         _pipe$1,
-        (body) => {
-          let $ = parse(body, decoder);
+        (body2) => {
+          let $ = parse(body2, decoder);
           if ($.isOk()) {
             let json = $[0];
             return new Ok(json);
@@ -4142,6 +4173,148 @@ function expect_json(decoder, to_msg) {
   );
 }
 
+// build/dev/javascript/plinth/window_ffi.mjs
+function self() {
+  return globalThis;
+}
+function alert(message) {
+  window.alert(message);
+}
+function prompt(message, defaultValue) {
+  let text3 = window.prompt(message, defaultValue);
+  if (text3 !== null) {
+    return new Ok(text3);
+  } else {
+    return new Error();
+  }
+}
+function addEventListener3(type, listener) {
+  return window.addEventListener(type, listener);
+}
+function document2(window2) {
+  return window2.document;
+}
+async function requestWakeLock() {
+  try {
+    return new Ok(await window.navigator.wakeLock.request("screen"));
+  } catch (error) {
+    return new Error(error.toString());
+  }
+}
+function location() {
+  return window.location.href;
+}
+function locationOf(w) {
+  try {
+    return new Ok(w.location.href);
+  } catch (error) {
+    return new Error(error.toString());
+  }
+}
+function setLocation(w, url) {
+  w.location.href = url;
+}
+function origin() {
+  return window.location.origin;
+}
+function pathname() {
+  return window.location.pathname;
+}
+function reload() {
+  return window.location.reload();
+}
+function reloadOf(w) {
+  return w.location.reload();
+}
+function focus2(w) {
+  return w.focus();
+}
+function getHash2() {
+  const hash = window.location.hash;
+  if (hash == "") {
+    return new Error();
+  }
+  return new Ok(decodeURIComponent(hash.slice(1)));
+}
+function getSearch() {
+  const search = window.location.search;
+  if (search == "") {
+    return new Error();
+  }
+  return new Ok(decodeURIComponent(search.slice(1)));
+}
+function innerHeight(w) {
+  return w.innerHeight;
+}
+function innerWidth(w) {
+  return w.innerWidth;
+}
+function outerHeight(w) {
+  return w.outerHeight;
+}
+function outerWidth(w) {
+  return w.outerWidth;
+}
+function screenX(w) {
+  return w.screenX;
+}
+function screenY(w) {
+  return w.screenY;
+}
+function screenTop(w) {
+  return w.screenTop;
+}
+function screenLeft(w) {
+  return w.screenLeft;
+}
+function scrollX(w) {
+  return w.scrollX;
+}
+function scrollY(w) {
+  return w.scrollY;
+}
+function open(url, target3, features) {
+  try {
+    return new Ok(window.open(url, target3, features));
+  } catch (error) {
+    return new Error(error.toString());
+  }
+}
+function close(w) {
+  w.close();
+}
+function closed(w) {
+  return w.closed;
+}
+function queueMicrotask(callback) {
+  return window.queueMicrotask(callback);
+}
+function requestAnimationFrame(callback) {
+  return window.requestAnimationFrame(callback);
+}
+function cancelAnimationFrame(callback) {
+  return window.cancelAnimationFrame(callback);
+}
+function eval_(string) {
+  try {
+    return new Ok(eval(string));
+  } catch (error) {
+    return new Error(error.toString());
+  }
+}
+async function import_(string6) {
+  try {
+    return new Ok(await import(string6));
+  } catch (error) {
+    return new Error(error.toString());
+  }
+}
+
+// build/dev/javascript/plinth/global_ffi.mjs
+function setTimeout(delay, callback) {
+  return globalThis.setTimeout(callback, delay);
+}
+
 // build/dev/javascript/cueitup/types.mjs
 var Config = class extends CustomType {
   constructor(profile_name, queue_url, aws_config_source, context_key, subset_key) {
@@ -4153,17 +4326,37 @@ var Config = class extends CustomType {
     this.subset_key = subset_key;
   }
 };
+var Behaviours = class extends CustomType {
+  constructor(delete_messages, select_on_hover, show_live_count) {
+    super();
+    this.delete_messages = delete_messages;
+    this.select_on_hover = select_on_hover;
+    this.show_live_count = show_live_count;
+  }
+};
 var MessageDetails = class extends CustomType {
-  constructor(id2, body, context_key, context_value, error) {
+  constructor(id2, body2, context_key, context_value, error) {
     super();
     this.id = id2;
-    this.body = body;
+    this.body = body2;
     this.context_key = context_key;
     this.context_value = context_value;
     this.error = error;
   }
 };
+var MessageCount = class extends CustomType {
+  constructor(count) {
+    super();
+    this.count = count;
+  }
+};
 var ConfigFetched = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var BehavioursFetched = class extends CustomType {
   constructor(x0) {
     super();
     this[0] = x0;
@@ -4183,6 +4376,18 @@ var HoverSettingsChanged = class extends CustomType {
     this[0] = x0;
   }
 };
+var DeleteSettingsChanged = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var ShowLiveCountChanged = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 var MessageChosen = class extends CustomType {
   constructor(x0) {
     super();
@@ -4195,30 +4400,38 @@ var MessagesFetched = class extends CustomType {
     this[0] = x0;
   }
 };
+var MessageCountFetched = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 var GoToStart = class extends CustomType {
 };
 var GoToEnd = class extends CustomType {
 };
+var Tick = class extends CustomType {
+};
 function config_decoder() {
   return field2(
     "profile_name",
-    string2,
+    string3,
     (profile_name) => {
       return field2(
         "queue_url",
-        string2,
+        string3,
         (queue_url) => {
           return field2(
             "aws_config_source",
-            string2,
+            string3,
             (aws_config_source) => {
               return field2(
                 "context_key",
-                optional(string2),
+                optional(string3),
                 (context_key) => {
                   return field2(
                     "subset_key",
-                    optional(string2),
+                    optional(string3),
                     (subset_key) => {
                       return success(
                         new Config(
@@ -4240,31 +4453,61 @@ function config_decoder() {
     }
   );
 }
+function default_behaviours() {
+  return new Behaviours(true, false, false);
+}
+function behaviours_decoder() {
+  return field2(
+    "delete_messages",
+    bool2,
+    (delete_messages) => {
+      return field2(
+        "select_on_hover",
+        bool2,
+        (select_on_hover) => {
+          return field2(
+            "show_live_count",
+            bool2,
+            (show_live_count) => {
+              return success(
+                new Behaviours(
+                  delete_messages,
+                  select_on_hover,
+                  show_live_count
+                )
+              );
+            }
+          );
+        }
+      );
+    }
+  );
+}
 function message_details_decoder() {
   return field2(
     "id",
-    string2,
+    string3,
     (id2) => {
       return field2(
         "body",
-        string2,
-        (body) => {
+        string3,
+        (body2) => {
           return field2(
             "context_key",
-            optional(string2),
+            optional(string3),
             (context_key) => {
               return field2(
                 "context_value",
-                optional(string2),
+                optional(string3),
                 (context_value) => {
                   return field2(
                     "error",
-                    optional(string2),
+                    optional(string3),
                     (error) => {
                       return success(
                         new MessageDetails(
                           id2,
-                          body,
+                          body2,
                           context_key,
                           context_value,
                           error
@@ -4281,8 +4524,39 @@ function message_details_decoder() {
     }
   );
 }
+function message_count_decoder() {
+  return field2(
+    "count",
+    int2,
+    (count) => {
+      return success(new MessageCount(count));
+    }
+  );
+}
 
 // build/dev/javascript/cueitup/effects.mjs
+function schedule_next_tick(delay_seconds) {
+  return from(
+    (dispatch) => {
+      setTimeout(
+        delay_seconds * 1e3,
+        () => {
+          return dispatch(new Tick());
+        }
+      );
+      return void 0;
+    }
+  );
+}
+var dev = true;
+function base_url() {
+  let $ = dev;
+  if (!$) {
+    return location();
+  } else {
+    return "http://127.0.0.1:8500/";
+  }
+}
 function fetch_config() {
   let expect = expect_json(
     config_decoder(),
@@ -4290,34 +4564,60 @@ function fetch_config() {
       return new ConfigFetched(var0);
     }
   );
-  return get("http://127.0.0.1:8500/api/config", expect);
+  return get(base_url() + "api/config", expect);
 }
-function fetch_messages(num) {
+function fetch_behaviours() {
+  let expect = expect_json(
+    behaviours_decoder(),
+    (var0) => {
+      return new BehavioursFetched(var0);
+    }
+  );
+  return get(base_url() + "api/behaviours", expect);
+}
+function fetch_message_count() {
+  let expect = expect_json(
+    message_count_decoder(),
+    (var0) => {
+      return new MessageCountFetched(var0);
+    }
+  );
+  return get(base_url() + "api/message-count", expect);
+}
+function fetch_messages(num, delete$2) {
   let expect = expect_json(
     list2(message_details_decoder()),
     (var0) => {
       return new MessagesFetched(var0);
     }
   );
+  let delete_query_param = (() => {
+    if (!delete$2) {
+      return "false";
+    } else {
+      return "true";
+    }
+  })();
   return get(
-    "http://127.0.0.1:8500/api/fetch?num=" + (() => {
+    base_url() + "api/fetch?num=" + (() => {
       let _pipe = num;
       return to_string(_pipe);
-    })(),
+    })() + "&delete=" + delete_query_param,
     expect
   );
 }
 
 // build/dev/javascript/cueitup/model.mjs
 var Model2 = class extends CustomType {
-  constructor(config, messages, messages_cache, http_error, current_message, select_on_hover, fetching, debug) {
+  constructor(config, behaviours, messages, messages_cache, http_error, current_message, message_count, fetching, debug) {
     super();
     this.config = config;
+    this.behaviours = behaviours;
     this.messages = messages;
     this.messages_cache = messages_cache;
     this.http_error = http_error;
     this.current_message = current_message;
-    this.select_on_hover = select_on_hover;
+    this.message_count = message_count;
     this.fetching = fetching;
     this.debug = debug;
   }
@@ -4325,17 +4625,19 @@ var Model2 = class extends CustomType {
 function init_model() {
   return new Model2(
     new None(),
+    default_behaviours(),
     toList([]),
     new_map(),
     new None(),
     new None(),
-    false,
+    new None(),
     false,
     false
   );
 }
 
 // build/dev/javascript/cueitup/update.mjs
+var message_count_interval_secs = 5;
 function update(model, msg) {
   if (msg instanceof ConfigFetched) {
     let res = msg[0];
@@ -4346,11 +4648,12 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             _record.config,
+            _record.behaviours,
             _record.messages,
             _record.messages_cache,
             new Some(e),
             _record.current_message,
-            _record.select_on_hover,
+            _record.message_count,
             _record.fetching,
             _record.debug
           );
@@ -4364,17 +4667,68 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             new Some(c),
+            _record.behaviours,
             _record.messages,
             _record.messages_cache,
             _record.http_error,
             _record.current_message,
-            _record.select_on_hover,
+            _record.message_count,
             _record.fetching,
             _record.debug
           );
         })(),
         none()
       ];
+    }
+  } else if (msg instanceof BehavioursFetched) {
+    let res = msg[0];
+    if (!res.isOk()) {
+      return [model, none()];
+    } else {
+      let b = res[0];
+      let $ = b.show_live_count;
+      if (!$) {
+        return [
+          (() => {
+            let _record = model;
+            return new Model2(
+              _record.config,
+              b,
+              _record.messages,
+              _record.messages_cache,
+              _record.http_error,
+              _record.current_message,
+              _record.message_count,
+              _record.fetching,
+              _record.debug
+            );
+          })(),
+          none()
+        ];
+      } else {
+        return [
+          (() => {
+            let _record = model;
+            return new Model2(
+              _record.config,
+              b,
+              _record.messages,
+              _record.messages_cache,
+              _record.http_error,
+              _record.current_message,
+              _record.message_count,
+              _record.fetching,
+              _record.debug
+            );
+          })(),
+          batch(
+            toList([
+              fetch_message_count(),
+              schedule_next_tick(message_count_interval_secs)
+            ])
+          )
+        ];
+      }
     }
   } else if (msg instanceof FetchMessages) {
     let num = msg[0];
@@ -4384,16 +4738,17 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             _record.config,
+            _record.behaviours,
             _record.messages,
             _record.messages_cache,
             new None(),
             _record.current_message,
-            _record.select_on_hover,
+            _record.message_count,
             true,
             _record.debug
           );
         })(),
-        fetch_messages(num)
+        fetch_messages(num, model.behaviours.delete_messages)
       ];
     } else {
       return [
@@ -4401,16 +4756,17 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             _record.config,
+            _record.behaviours,
             _record.messages,
             _record.messages_cache,
             new None(),
             _record.current_message,
-            _record.select_on_hover,
+            _record.message_count,
             true,
             _record.debug
           );
         })(),
-        fetch_messages(num)
+        fetch_messages(num, model.behaviours.delete_messages)
       ];
     }
   } else if (msg instanceof ClearMessages) {
@@ -4419,11 +4775,12 @@ function update(model, msg) {
         let _record = model;
         return new Model2(
           _record.config,
+          _record.behaviours,
           toList([]),
           new_map(),
           new None(),
           new None(),
-          _record.select_on_hover,
+          _record.message_count,
           _record.fetching,
           _record.debug
         );
@@ -4437,17 +4794,109 @@ function update(model, msg) {
         let _record = model;
         return new Model2(
           _record.config,
+          (() => {
+            let _record$1 = model.behaviours;
+            return new Behaviours(
+              _record$1.delete_messages,
+              selected,
+              _record$1.show_live_count
+            );
+          })(),
           _record.messages,
           _record.messages_cache,
           _record.http_error,
           _record.current_message,
-          selected,
+          _record.message_count,
           _record.fetching,
           _record.debug
         );
       })(),
       none()
     ];
+  } else if (msg instanceof DeleteSettingsChanged) {
+    let selected = msg[0];
+    return [
+      (() => {
+        let _record = model;
+        return new Model2(
+          _record.config,
+          (() => {
+            let _record$1 = model.behaviours;
+            return new Behaviours(
+              selected,
+              _record$1.select_on_hover,
+              _record$1.show_live_count
+            );
+          })(),
+          _record.messages,
+          _record.messages_cache,
+          _record.http_error,
+          _record.current_message,
+          _record.message_count,
+          _record.fetching,
+          _record.debug
+        );
+      })(),
+      none()
+    ];
+  } else if (msg instanceof ShowLiveCountChanged) {
+    let selected = msg[0];
+    if (!selected) {
+      return [
+        (() => {
+          let _record = model;
+          return new Model2(
+            _record.config,
+            (() => {
+              let _record$1 = model.behaviours;
+              return new Behaviours(
+                _record$1.delete_messages,
+                _record$1.select_on_hover,
+                selected
+              );
+            })(),
+            _record.messages,
+            _record.messages_cache,
+            _record.http_error,
+            _record.current_message,
+            new None(),
+            _record.fetching,
+            _record.debug
+          );
+        })(),
+        none()
+      ];
+    } else {
+      return [
+        (() => {
+          let _record = model;
+          return new Model2(
+            _record.config,
+            (() => {
+              let _record$1 = model.behaviours;
+              return new Behaviours(
+                _record$1.delete_messages,
+                _record$1.select_on_hover,
+                selected
+              );
+            })(),
+            _record.messages,
+            _record.messages_cache,
+            _record.http_error,
+            _record.current_message,
+            _record.message_count,
+            _record.fetching,
+            _record.debug
+          );
+        })(),
+        batch(
+          toList([
+            fetch_message_count(),
+            schedule_next_tick(message_count_interval_secs)
+          ])
+        )
+      ];
+    }
   } else if (msg instanceof GoToEnd) {
     return [model, none()];
   } else if (msg instanceof GoToStart) {
@@ -4467,11 +4916,12 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             _record.config,
+            _record.behaviours,
             _record.messages,
             _record.messages_cache,
             _record.http_error,
             new Some([index5, msg$1]),
-            _record.select_on_hover,
+            _record.message_count,
             _record.fetching,
             _record.debug
           );
@@ -4479,7 +4929,7 @@ function update(model, msg) {
         none()
       ];
     }
-  } else {
+  } else if (msg instanceof MessagesFetched) {
     let result = msg[0];
     if (!result.isOk()) {
       let e = result[0];
@@ -4488,11 +4938,12 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             _record.config,
+            _record.behaviours,
             _record.messages,
             _record.messages_cache,
             new Some(e),
             _record.current_message,
-            _record.select_on_hover,
+            _record.message_count,
             false,
             _record.debug
           );
@@ -4517,16 +4968,72 @@ function update(model, msg) {
           let _record = model;
           return new Model2(
             _record.config,
+            _record.behaviours,
             updated_messages,
             messages_cache,
             _record.http_error,
             _record.current_message,
-            _record.select_on_hover,
+            _record.message_count,
             false,
             _record.debug
           );
         })(),
         none()
+      ];
+    }
+  } else if (msg instanceof MessageCountFetched) {
+    let res = msg[0];
+    if (!res.isOk()) {
+      return [
+        (() => {
+          let _record = model;
+          return new Model2(
+            _record.config,
+            _record.behaviours,
+            _record.messages,
+            _record.messages_cache,
+            _record.http_error,
+            _record.current_message,
+            new None(),
+            _record.fetching,
+            _record.debug
+          );
+        })(),
+        none()
+      ];
+    } else {
+      let c = res[0];
+      return [
+        (() => {
+          let _record = model;
+          return new Model2(
+            _record.config,
+            _record.behaviours,
+            _record.messages,
+            _record.messages_cache,
+            _record.http_error,
+            _record.current_message,
+            new Some(c.count),
+            _record.fetching,
+            _record.debug
+          );
+        })(),
+        none()
+      ];
+    }
+  } else {
+    let $ = model.behaviours.show_live_count;
+    if (!$) {
+      return [model, none()];
+    } else {
+      return [
+        model,
+        batch(
+          toList([
+            fetch_message_count(),
+            schedule_next_tick(message_count_interval_secs)
+          ])
+        )
       ];
     }
   }
@@ -4635,9 +5142,9 @@ function http_error_to_string(error) {
   } else if (error instanceof NotFound) {
     return "not found";
   } else if (error instanceof OtherError) {
-    let code = error[0];
-    let body = error[1];
-    return "non success HTTP response; status: " + to_string(code) + ", body: " + body;
+    let code2 = error[0];
+    let body2 = error[1];
+    return "non success HTTP response; status: " + to_string(code2) + ", body: " + body2;
   } else {
     return "unauthorized";
   }
@@ -4648,7 +5155,7 @@ function messages_section_empty(height_class) {
   return div(
     toList([
       class$(
-        "mt-4 " + height_class + " flex border-2 border-[#928374] border-opacity-20 items-center flex justify-center"
+        "mt-4 " + height_class + " flex border-2 border-[#928374] border-opacity-20 items-center flex justify-center overflow-auto"
       )
     ]),
     toList([
@@ -4717,7 +5224,7 @@ function message_details_pane(model) {
         toList([
           text2(
             (() => {
-              let $1 = model.select_on_hover;
+              let $1 = model.behaviours.select_on_hover;
               if ($1) {
                 return "Hover on";
               } else {
@@ -4794,7 +5301,7 @@ function messages_section_with_messages(model, height_class) {
                         m,
                         i,
                         current_index,
-                        model.select_on_hover
+                        model.behaviours.select_on_hover
                       );
                     }
                   );
@@ -4908,7 +5415,7 @@ function consumer_info(config) {
     ])
   );
 }
-function controls_div_with_config(config, fetching, select_on_hover) {
+function controls_div_with_config(model, config) {
   return div(
     toList([class$("flex items-center space-x-2 mt-4")]),
     toList([
@@ -4935,7 +5442,7 @@ function controls_div_with_config(config, fetching, select_on_hover) {
           class$(
             "font-semibold px-4 py-1 bg-[#83a598] text-[#282828] hover:bg-[#fabd2f]"
           ),
-          disabled(fetching),
+          disabled(model.fetching),
           on_click(new FetchMessages(1))
         ]),
         toList([text("Fetch next")])
@@ -4945,7 +5452,7 @@ function controls_div_with_config(config, fetching, select_on_hover) {
           class$(
             "font-semibold px-4 py-1 bg-[#83a598] text-[#282828] hover:bg-[#fabd2f]"
           ),
-          disabled(fetching),
+          disabled(model.fetching),
           on_click(new FetchMessages(10))
         ]),
         toList([text("Fetch multiple")])
@@ -4955,7 +5462,7 @@ function controls_div_with_config(config, fetching, select_on_hover) {
           class$(
             "font-semibold px-4 py-1 bg-[#bdae93] text-[#282828] hover:bg-[#fabd2f]"
           ),
-          disabled(fetching),
+          disabled(model.fetching),
           on_click(new ClearMessages())
         ]),
         toList([text("Clear Messages")])
@@ -4963,30 +5470,126 @@ function controls_div_with_config(config, fetching, select_on_hover) {
       div(
         toList([
           class$(
-            "font-semibold px-4 py-1 flex items-center space-x-2"
+            "border-2 border-[#928374] border-opacity-40 border-dashed font-semibold px-4 py-1 flex items-center space-x-4"
           )
         ]),
         toList([
-          label(
+          div(
+            toList([class$("flex items-center space-x-2")]),
             toList([
-              class$("cursor-pointer"),
-              for$("hover-control-input")
-            ]),
-            toList([text("select on hover")])
+              label(
+                toList([
+                  class$("cursor-pointer"),
+                  for$("hover-control-input")
+                ]),
+                toList([text("select on hover")])
+              ),
+              input(
+                toList([
+                  class$(
+                    "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer"
+                  ),
+                  id("hover-control-input"),
+                  type_("checkbox"),
+                  on_check(
+                    (var0) => {
+                      return new HoverSettingsChanged(var0);
+                    }
+                  ),
+                  checked(model.behaviours.select_on_hover)
+                ])
+              )
+            ])
           ),
-          input(
+          div(
+            toList([class$("flex items-center space-x-2")]),
             toList([
-              class$(
-                "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer"
+              label(
+                toList([
+                  class$("cursor-pointer"),
+                  for$("hover-control-input")
+                ]),
+                toList([text("delete")])
               ),
-              id("hover-control-input"),
-              type_("checkbox"),
-              on_check(
-                (var0) => {
-                  return new HoverSettingsChanged(var0);
+              input(
+                toList([
+                  class$(
+                    "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer"
+                  ),
+                  id("delete-messages"),
+                  type_("checkbox"),
+                  on_check(
+                    (var0) => {
+                      return new DeleteSettingsChanged(var0);
+                    }
+                  ),
+                  checked(model.behaviours.delete_messages)
+                ])
+              )
+            ])
+          ),
+          div(
+            toList([class$("flex items-center space-x-2")]),
+            toList([
+              div(
+                toList([class$("relative group")]),
+                toList([
+                  label(
+                    toList([
+                      class$("cursor-pointer"),
+                      for$("show-live-count")
+                    ]),
+                    toList([text("live count")])
+                  ),
+                  div(
+                    toList([
+                      class$(
+                        "absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-[#928374] text-[#282828] text-sm px-2 py-1 min-w-[250px]"
+                      )
+                    ]),
+                    toList([
+                      text2(
+                        "Message count may fluctuate a bit, that's normal"
+                      )
+                    ])
+                  )
+                ])
+              ),
+              input(
+                toList([
+                  class$(
+                    "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer"
+                  ),
+                  id("show-live-count"),
+                  type_("checkbox"),
+                  on_check(
+                    (var0) => {
+                      return new ShowLiveCountChanged(var0);
+                    }
+                  ),
+                  checked(model.behaviours.show_live_count)
+                ])
+              ),
+              (() => {
+                let $ = model.message_count;
+                let $1 = model.behaviours.show_live_count;
+                if ($ instanceof Some && $1) {
+                  let c = $[0];
+                  return p(
+                    toList([]),
+                    toList([
+                      text(
+                        "(" + (() => {
+                          let _pipe = c;
+                          return to_string(_pipe);
+                        })() + " available)"
+                      )
+                    ])
+                  );
+                } else {
+                  return none2();
                 }
-              ),
-              checked(select_on_hover)
+              })()
             ])
           )
         ])
@@ -4998,7 +5601,7 @@ function controls_section(model) {
   let $ = model.config;
   if ($ instanceof Some) {
     let c = $[0];
-    return controls_div_with_config(c, model.fetching, model.select_on_hover);
+    return controls_div_with_config(model, c);
   } else {
     return controls_div_when_no_config();
   }
@@ -5026,7 +5629,10 @@ function view(model) {
 
 // build/dev/javascript/cueitup/cueitup.mjs
 function init2(_) {
-  return [init_model(), fetch_config()];
+  return [
+    init_model(),
+    batch(toList([fetch_config(), fetch_behaviours()]))
+  ];
 }
 function main() {
   let app = application(init2, update, view);

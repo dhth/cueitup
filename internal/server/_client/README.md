@@ -13,7 +13,7 @@ Prequisites
 go run . serve <PROFILE>
 
 cd client
-# replace window.location() in src/effects.gleam with http://127.0.0.1:<PORT>
+# set dev = True in src/effects.gleam
 gleam run -m lustre/dev start
 ```
 

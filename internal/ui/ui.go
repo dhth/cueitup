@@ -16,7 +16,7 @@ func RenderUI(
 	sqsClient *sqs.Client,
 	queueURL string,
 	config t.Config,
-	behaviours t.Behaviours,
+	behaviours t.TUIBehaviours,
 ) error {
 	if len(os.Getenv("DEBUG")) > 0 {
 		f, err := tea.LogToFile("debug.log", "debug")

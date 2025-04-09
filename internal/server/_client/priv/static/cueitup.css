@@ -544,9 +544,29 @@ video {
   --tw-backdrop-sepia:  ;
 }
 
+.absolute {
+  position: absolute;
+}
+
+.relative {
+  position: relative;
+}
+
+.bottom-full {
+  bottom: 100%;
+}
+
+.left-1\/2 {
+  left: 50%;
+}
+
 .mx-4 {
   margin-left: 1rem;
   margin-right: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
 }
 
 .mb-4 {
@@ -563,6 +583,10 @@ video {
 
 .flex {
   display: flex;
+}
+
+.hidden {
+  display: none;
 }
 
 .h-4 {
@@ -589,6 +613,15 @@ video {
   width: 1rem;
 }
 
+.min-w-\[250px\] {
+  min-width: 250px;
+}
+
+.-translate-x-1\/2 {
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
 .cursor-pointer {
   cursor: pointer;
 }
@@ -607,6 +640,12 @@ video {
   margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
 }
 
+.space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
 .overflow-auto {
   overflow: auto;
 }
@@ -617,6 +656,10 @@ video {
 
 .border-l-2 {
   border-left-width: 2px;
+}
+
+.border-dashed {
+  border-style: dashed;
 }
 
 .border-\[\#928374\] {
@@ -643,6 +686,10 @@ video {
   --tw-border-opacity: 0.2;
 }
 
+.border-opacity-40 {
+  --tw-border-opacity: 0.4;
+}
+
 .border-opacity-50 {
   --tw-border-opacity: 0.5;
 }
@@ -655,6 +702,11 @@ video {
 .bg-\[\#83a598\] {
   --tw-bg-opacity: 1;
   background-color: rgb(131 165 152 / var(--tw-bg-opacity));
+}
+
+.bg-\[\#928374\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(146 131 116 / var(--tw-bg-opacity));
 }
 
 .bg-\[\#bdae93\] {
@@ -673,6 +725,11 @@ video {
 
 .p-6 {
   padding: 1.5rem;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .px-4 {
@@ -796,6 +853,10 @@ video {
 .focus\:ring-\[\#fabd2f\]:focus {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(250 189 47 / var(--tw-ring-opacity));
+}
+
+.group:hover .group-hover\:block {
+  display: block;
 }
 
 @media (min-width: 640px) {

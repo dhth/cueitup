@@ -27,6 +27,33 @@ pub fn config_decoder() -> decode.Decoder(Config) {
   ))
 }
 
+pub type Behaviours {
+  Behaviours(
+    delete_messages: Bool,
+    select_on_hover: Bool,
+    show_live_count: Bool,
+  )
+}
+
+pub fn default_behaviours() -> Behaviours {
+  Behaviours(
+    delete_messages: True,
+    select_on_hover: False,
+    show_live_count: False,
+  )
+}
+
+pub fn behaviours_decoder() -> decode.Decoder(Behaviours) {
+  use delete_messages <- decode.field("delete_messages", decode.bool)
+  use select_on_hover <- decode.field("select_on_hover", decode.bool)
+  use show_live_count <- decode.field("show_live_count", decode.bool)
+  decode.success(Behaviours(
+    delete_messages:,
+    select_on_hover:,
+    show_live_count:,
+  ))
+}
+
 pub type MessageOffset =
   Int
 
@@ -58,15 +85,29 @@ pub fn message_details_decoder() -> decode.Decoder(MessageDetails) {
   ))
 }
 
+pub type MessageCount {
+  MessageCount(count: Int)
+}
+
+pub fn message_count_decoder() -> decode.Decoder(MessageCount) {
+  use count <- decode.field("count", decode.int)
+  decode.success(MessageCount(count:))
+}
+
 pub type Msg {
   ConfigFetched(Result(Config, lustre_http.HttpError))
+  BehavioursFetched(Result(Behaviours, lustre_http.HttpError))
   FetchMessages(Int)
   ClearMessages
   HoverSettingsChanged(Bool)
+  DeleteSettingsChanged(Bool)
+  ShowLiveCountChanged(Bool)
   MessageChosen(Int)
   MessagesFetched(Result(List(MessageDetails), lustre_http.HttpError))
+  MessageCountFetched(Result(MessageCount, lustre_http.HttpError))
   GoToStart
   GoToEnd
+  Tick
 }
 
 pub fn dummy_message() -> List(MessageDetails) {

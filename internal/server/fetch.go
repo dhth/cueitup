@@ -30,6 +30,10 @@ type KafkaMessage struct {
 	Err       error   `json:"error"`
 }
 
+type MessageCount struct {
+	Count int `json:"count"`
+}
+
 func getMessages(client *sqs.Client, config t.Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
@@ -38,12 +42,25 @@ func getMessages(client *sqs.Client, config t.Config) func(w http.ResponseWriter
 		numMessages := 1
 		if numMessagesStr != "" {
 			num, err := strconv.Atoi(numMessagesStr)
-			if err == nil && num > 1 {
-				numMessages = num
+			if err != nil || num < 1 {
+				http.Error(w, fmt.Sprintf("incorrect value provided for query param \"num\": %s", err.Error()), http.StatusBadRequest)
+				return
 			}
+			numMessages = num
 		}
 		if numMessages > 10 {
 			numMessages = 10
+		}
+
+		deleteStr := queryParams.Get("delete")
+		var deleteMessages bool
+		if deleteStr != "" {
+			parsed, err := strconv.ParseBool(deleteStr)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("incorrect value provided for query param \"delete\": %s", err.Error()), http.StatusBadRequest)
+				return
+			}
+			deleteMessages = parsed
 		}
 
 		result, err := client.ReceiveMessage(context.TODO(),
@@ -63,7 +80,7 @@ func getMessages(client *sqs.Client, config t.Config) func(w http.ResponseWriter
 			messages[i] = t.GetMessageData(&message, config)
 		}
 
-		if len(messages) > 0 {
+		if deleteMessages && len(messages) > 0 {
 			deleteEntries := make([]sqstypes.DeleteMessageBatchRequestEntry, len(messages))
 			for i := range result.Messages {
 				deleteEntries[i].Id = aws.String(fmt.Sprintf("%v", i))
@@ -93,9 +110,57 @@ func getMessages(client *sqs.Client, config t.Config) func(w http.ResponseWriter
 	}
 }
 
+func getMessageCount(client *sqs.Client, config t.Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		approxMsgCountType := sqstypes.QueueAttributeNameApproximateNumberOfMessages
+		attribute, err := client.GetQueueAttributes(context.TODO(),
+			&sqs.GetQueueAttributesInput{
+				QueueUrl:       aws.String(config.QueueURL),
+				AttributeNames: []sqstypes.QueueAttributeName{approxMsgCountType},
+			})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to get message message count: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		countStr := attribute.Attributes[string(approxMsgCountType)]
+		count, err := strconv.Atoi(countStr)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to convert message count to an int: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		jsonBytes, err := json.Marshal(MessageCount{count})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode JSON: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set(contentType, applicationJSON)
+		if _, err := w.Write(jsonBytes); err != nil {
+			log.Printf("failed to write bytes to HTTP connection: %s", err.Error())
+		}
+	}
+}
+
 func getConfig(config t.Config) func(w http.ResponseWriter, _ *http.Request) {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		jsonBytes, err := json.Marshal(config)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode JSON: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set(contentType, applicationJSON)
+		if _, err := w.Write(jsonBytes); err != nil {
+			log.Printf("failed to write bytes to HTTP connection: %s", err.Error())
+		}
+	}
+}
+
+func getBehaviours(behaviours t.WebBehaviours) func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		jsonBytes, err := json.Marshal(behaviours)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to encode JSON: %s", err.Error()), http.StatusInternalServerError)
 			return

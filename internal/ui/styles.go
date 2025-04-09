@@ -4,7 +4,6 @@ import "github.com/charmbracelet/lipgloss"
 
 const (
 	defaultForegroundColor = "#282828"
-	activeHeaderColor      = "#fe8019"
 	inactivePaneColor      = "#928374"
 	listPaneBorderColor    = "#3c3836"
 	helpMsgColor           = "#83a598"

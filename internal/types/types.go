@@ -216,13 +216,13 @@ func ParseProfileConfig(config ProfileConfig) (Config, []error) {
 	}, nil
 }
 
-type Behaviours struct {
+type TUIBehaviours struct {
 	DeleteMessages  bool
 	PersistMessages bool
 	SkipMessages    bool
 }
 
-func (b Behaviours) Display() string {
+func (b TUIBehaviours) Display() string {
 	return fmt.Sprintf(`
 - delete messages         %v
 - persist messages        %v
@@ -234,7 +234,24 @@ func (b Behaviours) Display() string {
 	)
 }
 
-// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_Message.html
+type WebBehaviours struct {
+	DeleteMessages bool `json:"delete_messages"`
+	SelectOnHover  bool `json:"select_on_hover"`
+	ShowLiveCount  bool `json:"show_live_count"`
+}
+
+func (b WebBehaviours) Display() string {
+	return fmt.Sprintf(`
+- delete messages         %v
+- select on hover         %v
+- show live count         %v
+`,
+		b.DeleteMessages,
+		b.SelectOnHover,
+		b.ShowLiveCount,
+	)
+}
+
 type Message struct {
 	ID           string  `json:"id"`
 	Body         string  `json:"body"`
@@ -244,12 +261,12 @@ type Message struct {
 }
 
 func (item Message) Title() string {
-	return fmt.Sprintf("%s: %s", utils.RightPadTrim("msgId", 10), item.ID)
+	return fmt.Sprintf("%s: %s", utils.RightPadTrim("msgId", 12), item.ID)
 }
 
 func (item Message) Description() string {
 	if item.ContextKey != nil && item.ContextValue != nil {
-		return fmt.Sprintf("%s: %s", utils.RightPadTrim(*item.ContextKey, 10), *item.ContextValue)
+		return fmt.Sprintf("%s: %s", utils.RightPadTrim(*item.ContextKey, 12), *item.ContextValue)
 	}
 	return ""
 }
