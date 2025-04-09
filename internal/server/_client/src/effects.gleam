@@ -9,7 +9,7 @@ import types.{
   message_details_decoder,
 }
 
-const dev = True
+const dev = False
 
 fn base_url() -> String {
   case dev {

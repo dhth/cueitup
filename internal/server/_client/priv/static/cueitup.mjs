@@ -4548,7 +4548,7 @@ function schedule_next_tick(delay_seconds) {
     }
   );
 }
-var dev = true;
+var dev = false;
 function base_url() {
   let $ = dev;
   if (!$) {
