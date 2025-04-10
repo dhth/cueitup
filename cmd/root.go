@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/dhth/cueitup/internal/aws"
 	"github.com/dhth/cueitup/internal/server"
 	t "github.com/dhth/cueitup/internal/types"
 	"github.com/dhth/cueitup/internal/ui"
@@ -67,7 +66,7 @@ own details related to authentication, deserialization, etc.
 				return fmt.Errorf("%w: %w", ErrCouldntReadConfigFile, err)
 			}
 
-			cfg, err = getProfile(configBytes, args[0])
+			cfg, err = getConfig(configBytes, args[0])
 			if errors.Is(err, errProfileNotFound) {
 				return err
 			} else if err != nil {
@@ -97,7 +96,6 @@ own details related to authentication, deserialization, etc.
 Profile
 ---
 %s
-
 Behaviours 
 ---
 %s`,
@@ -107,9 +105,7 @@ Behaviours
 				return nil
 			}
 
-			sdkConfig, err := config.LoadDefaultConfig(context.TODO(),
-				config.WithSharedConfigProfile(cfg.AWSConfigSource),
-			)
+			sdkConfig, err := aws.GetAWSConfig(cfg.AWSConfigSource)
 			if err != nil {
 				return fmt.Errorf("%w: %s", errCouldntLoadAWSConfig, err.Error())
 			}
@@ -139,7 +135,6 @@ Behaviours
 Profile
 ---
 %s
-
 Behaviours 
 ---
 %s`,
@@ -149,9 +144,7 @@ Behaviours
 				return nil
 			}
 
-			sdkConfig, err := config.LoadDefaultConfig(context.TODO(),
-				config.WithSharedConfigProfile(cfg.AWSConfigSource),
-			)
+			sdkConfig, err := aws.GetAWSConfig(cfg.AWSConfigSource)
 			if err != nil {
 				return fmt.Errorf("%w: %s", errCouldntLoadAWSConfig, err.Error())
 			}

@@ -11,5 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for profiles
 - Add web interface
+- Allow multiple sources for AWS config
 
 [unreleased]: https://github.com/dhth/cueitup/compare/v0.2.2...HEAD
