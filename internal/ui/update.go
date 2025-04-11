@@ -28,27 +28,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msgsListView:
 				return m, tea.Quit
 			case msgValueView:
-				if m.vpFullScreen {
-					m.vpFullScreen = false
-					m.msgValueVP.Width = 120
-				} else {
-					m.activeView = msgsListView
-				}
+				m.activeView = msgsListView
 			case helpView:
 				m.activeView = m.lastView
-			}
-		case "esc":
-			if m.activeView == contextualSearchView {
-				m.activeView = m.lastView
-			}
-		case "enter":
-			if m.activeView == contextualSearchView {
-				m.activeView = m.lastView
-				if len(m.contextSearchInput.Value()) > 0 {
-					cmds = append(cmds, setContextSearchValues(m.contextSearchInput.Value()))
-				} else {
-					m.filterMessages = false
-				}
 			}
 		case "n", " ":
 			m.message = fetchingIndicator
@@ -85,20 +67,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "[", "h":
 			if m.activeView == msgValueView {
 				m.msgsList.CursorUp()
-				selected := m.msgsList.SelectedItem()
-				if selected != nil {
-					result := string(pretty.Color([]byte(m.recordValueStore[selected.FilterValue()]), nil))
-					m.msgValueVP.SetContent(result)
-				}
 			}
 		case "]", "l":
 			if m.activeView == msgValueView {
 				m.msgsList.CursorDown()
-				selected := m.msgsList.SelectedItem()
-				if selected != nil {
-					result := string(pretty.Color([]byte(m.recordValueStore[selected.FilterValue()]), nil))
-					m.msgValueVP.SetContent(result)
-				}
 			}
 		case "ctrl+p":
 			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
@@ -109,65 +81,46 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					),
 				)
 			}
-		case "ctrl+s":
-			if m.activeView == msgsListView {
-				m.lastView = m.activeView
-				m.activeView = contextualSearchView
-			}
-		case "ctrl+f":
-			if len(m.contextSearchValues) > 0 {
-				m.filterMessages = !m.filterMessages
-			}
 		case "ctrl+r":
 			if m.activeView == msgsListView {
 				m.msgsList.SetItems(make([]list.Item, 0))
 				m.msgValueVP.SetContent("")
 				m.firstFetch = true
-				m.filterMessages = false
 			}
-		case "1":
-			m.msgValueVP.Width = m.terminalWidth - 1
-			m.msgValueVP.Height = m.terminalHeight - 7
-			m.vpFullScreen = true
-			m.lastView = msgsListView
-			m.activeView = msgValueView
 		case "tab":
-			if !m.vpFullScreen {
-				switch m.activeView {
-				case msgsListView:
-					m.activeView = msgValueView
-				case msgValueView:
-					m.activeView = msgsListView
-				}
+			switch m.activeView {
+			case msgsListView:
+				m.activeView = msgValueView
+			case msgValueView:
+				m.activeView = msgsListView
 			}
 		case "shift+tab":
-			if !m.vpFullScreen {
-				switch m.activeView {
-				case msgsListView:
-					m.activeView = msgsListView
-				case msgValueView:
-					m.activeView = msgsListView
-				}
+			switch m.activeView {
+			case msgsListView:
+				m.activeView = msgsListView
+			case msgValueView:
+				m.activeView = msgsListView
 			}
 		}
 
 	case tea.WindowSizeMsg:
-		_, h := msgListStyle.GetFrameSize()
+		w, h := msgListStyle.GetFrameSize()
+		w2, _ := msgValueVPStyle.GetFrameSize()
 		m.terminalHeight = msg.Height
 		m.terminalWidth = msg.Width - 1
 		m.msgsList.SetHeight(msg.Height - h - 2)
 
 		if !m.msgValueVPReady {
-			m.msgValueVP = viewport.New(120, m.terminalHeight-7)
+			m.msgValueVP = viewport.New(msg.Width-2-w-w2-listWidth, m.terminalHeight-12)
 			m.msgValueVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.msgValueVPReady = true
 		} else {
-			m.msgValueVP.Width = 120
-			m.msgValueVP.Height = 12
+			m.msgValueVP.Width = msg.Width - 2 - w - w2 - listWidth
+			m.msgValueVP.Height = msg.Height - 12
 		}
 
 		if !m.helpVPReady {
-			m.helpVP = viewport.New(msg.Width, msg.Height-7)
+			m.helpVP = viewport.New(msg.Width-1, msg.Height-7)
 			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.helpVP.SetContent(HelpText)
 			m.helpVPReady = true
@@ -175,17 +128,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.helpVP.Width = msg.Width - 1
 			m.helpVP.Height = msg.Height - 7
 		}
-	case KMsgValueReadyMsg:
-		if msg.err != nil {
-			m.errorMsg = msg.err.Error()
-		} else {
-			m.recordValueStore[msg.storeKey] = msg.msgValue
-		}
-
-	case ContextSearchValuesSetMsg:
-		m.contextSearchValues = msg.values
-		m.contextSearchInput.SetValue("")
-		m.filterMessages = true
 
 	case HideHelpMsg:
 		m.showHelpIndicator = false
@@ -197,7 +139,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !m.behaviours.SkipMessages {
 				for _, message := range msg.messages {
 					m.msgsList.InsertItem(len(m.msgsList.Items()), message)
-					m.recordValueStore[message.ID] = message.Body
 
 					if m.behaviours.PersistMessages {
 						cmds = append(cmds,
@@ -218,32 +159,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							msg.sqsMessages),
 					)
 				}
-
-				if m.firstFetch {
-					selected := m.msgsList.SelectedItem()
-					if selected != nil {
-						recordValue, ok := m.recordValueStore[selected.FilterValue()]
-						if ok {
-							switch m.config.Format {
-							case t.JSON:
-								result := string(pretty.Color([]byte(recordValue), nil))
-								m.msgValueVP.SetContent(result)
-							case t.None:
-								m.msgValueVP.SetContent(recordValue)
-							}
-							m.firstFetch = false
-						}
-					}
-				}
 			}
-		}
-	case MsgChosenMsg:
-		switch m.config.Format {
-		case t.JSON:
-			result := string(pretty.Color([]byte(m.recordValueStore[msg.key]), nil))
-			m.msgValueVP.SetContent(result)
-		default:
-			m.msgValueVP.SetContent(m.recordValueStore[msg.key])
 		}
 	case MsgCountTickMsg:
 		cmds = append(cmds, GetQueueMsgCount(m.sqsClient, m.queueURL))
@@ -269,9 +185,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case helpView:
 		m.helpVP, updateCmd = m.helpVP.Update(msg)
 		cmds = append(cmds, updateCmd)
-	case contextualSearchView:
-		m.contextSearchInput, updateCmd = m.contextSearchInput.Update(msg)
-		cmds = append(cmds, updateCmd)
+	}
+
+	if m.activeView == msgsListView || m.activeView == msgValueView {
+		if len(m.msgsList.Items()) > 0 && m.msgsList.Index() != m.msgListCurrentIndex {
+			m.msgListCurrentIndex = m.msgsList.Index()
+			message, ok := m.msgsList.SelectedItem().(t.Message)
+
+			if ok {
+				var vpContent string
+				if message.Err != nil {
+					vpContent = errorStyle.Render(fmt.Sprintf("error: %s", message.Err.Error()))
+				} else {
+					switch m.config.Format {
+					case t.JSON:
+						vpContent = string(pretty.Color([]byte(message.Body), nil))
+					default:
+						vpContent = message.Body
+					}
+				}
+				m.msgValueVP.SetContent(vpContent)
+			}
+
+		}
 	}
 
 	return m, tea.Batch(cmds...)

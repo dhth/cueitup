@@ -25,21 +25,7 @@ type SQSMsgsDeletedMsg struct {
 	err error
 }
 
-type MsgChosenMsg struct {
-	key string
-}
-
-type ContextSearchValuesSetMsg struct {
-	values []string
-}
-
 type RecordSavedToDiskMsg struct {
 	path string
 	err  error
-}
-
-type KMsgValueReadyMsg struct {
-	storeKey string
-	msgValue string
-	err      error
 }

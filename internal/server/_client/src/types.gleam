@@ -57,8 +57,8 @@ pub fn behaviours_decoder() -> decode.Decoder(Behaviours) {
 pub type MessageOffset =
   Int
 
-pub type MessageDetails {
-  MessageDetails(
+pub type Message {
+  Message(
     id: String,
     body: String,
     context_key: option.Option(String),
@@ -67,7 +67,7 @@ pub type MessageDetails {
   )
 }
 
-pub fn message_details_decoder() -> decode.Decoder(MessageDetails) {
+pub fn message_details_decoder() -> decode.Decoder(Message) {
   use id <- decode.field("id", decode.string)
   use body <- decode.field("body", decode.string)
   use context_key <- decode.field("context_key", decode.optional(decode.string))
@@ -76,13 +76,7 @@ pub fn message_details_decoder() -> decode.Decoder(MessageDetails) {
     decode.optional(decode.string),
   )
   use error <- decode.field("error", decode.optional(decode.string))
-  decode.success(MessageDetails(
-    id:,
-    body:,
-    context_key:,
-    context_value:,
-    error:,
-  ))
+  decode.success(Message(id:, body:, context_key:, context_value:, error:))
 }
 
 pub type MessageCount {
@@ -103,14 +97,14 @@ pub type Msg {
   DeleteSettingsChanged(Bool)
   ShowLiveCountChanged(Bool)
   MessageChosen(Int)
-  MessagesFetched(Result(List(MessageDetails), lustre_http.HttpError))
+  MessagesFetched(Result(List(Message), lustre_http.HttpError))
   MessageCountFetched(Result(MessageCount, lustre_http.HttpError))
   GoToStart
   GoToEnd
   Tick
 }
 
-pub fn dummy_message() -> List(MessageDetails) {
+pub fn dummy_message() -> List(Message) {
   let id = "20693f56-b784-4594-b79e-38c6d1756035"
   let body =
     "
@@ -132,7 +126,7 @@ pub fn dummy_message() -> List(MessageDetails) {
   \"version\": 4
 }"
   [
-    MessageDetails(
+    Message(
       id:,
       body:,
       context_key: option.None,

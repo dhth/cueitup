@@ -15,22 +15,19 @@ func (m Model) View() string {
 	var mode string
 	var statusBar string
 	var debugMsg string
-	var msgValVPTitleStyle lipgloss.Style
 
 	if m.message != "" {
-		statusBar = utils.Trim(m.message, 120)
+		statusBar = m.message
 	}
 
 	m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(inactivePaneColor))
-	msgValVPTitleStyle = msgValueTitleStyle
+	msgValTitleStyleToUse := msgValueTitleStyle
 
 	switch m.activeView {
 	case msgsListView:
 		m.msgsList.Styles.Title = m.msgsList.Styles.Title.Background(lipgloss.Color(cueitupColor))
 	case msgValueView:
-		msgValVPTitleStyle = msgValVPTitleStyle.Background(lipgloss.Color(cueitupColor))
-	case contextualSearchView:
-		statusBar = m.contextSearchInput.View()
+		msgValTitleStyleToUse = msgValTitleStyleToUse.Background(lipgloss.Color(cueitupColor))
 	}
 
 	if !m.behaviours.DeleteMessages {
@@ -51,10 +48,6 @@ func (m Model) View() string {
 		mode += " " + skippingStyle.Render("skipping msgs!")
 	}
 
-	if m.filterMessages && len(m.contextSearchValues) > 0 && m.config.ContextKey != nil {
-		mode += " " + skippingStyle.Render(fmt.Sprintf("filtering where %s in : %v", *m.config.ContextKey, m.contextSearchValues))
-	}
-
 	var errorMsg string
 	if m.errorMsg != "" {
 		errorMsg = " error: " + utils.Trim(m.errorMsg, 120)
@@ -64,12 +57,7 @@ func (m Model) View() string {
 	if !m.msgValueVPReady {
 		msgValueVP = "\n  Initializing..."
 	} else {
-		switch m.vpFullScreen {
-		case true:
-			msgValueVP = msgValueVPFSStyle.Render(fmt.Sprintf("  %s\n\n%s\n", msgValVPTitleStyle.Render("Message Value"), m.msgValueVP.View()))
-		case false:
-			msgValueVP = msgValueVPStyle.Render(fmt.Sprintf("  %s\n\n%s\n", msgValVPTitleStyle.Render("Message Value"), m.msgValueVP.View()))
-		}
+		msgValueVP = msgValueVPStyle.Render(fmt.Sprintf("%s\n\n%s\n", msgValTitleStyleToUse.Render("Message Value"), m.msgValueVP.View()))
 	}
 	var helpVP string
 	if !m.helpVPReady {
@@ -79,23 +67,18 @@ func (m Model) View() string {
 	}
 
 	switch m.activeView {
-	case msgsListView, contextualSearchView:
+	case msgsListView:
 		content = lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			msgListStyle.Render(m.msgsList.View()),
 			msgValueVP,
 		)
 	case msgValueView:
-		switch m.vpFullScreen {
-		case true:
-			content = msgValueVP
-		case false:
-			content = lipgloss.JoinHorizontal(
-				lipgloss.Top,
-				msgListStyle.Render(m.msgsList.View()),
-				msgValueVP,
-			)
-		}
+		content = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			msgListStyle.Render(m.msgsList.View()),
+			msgValueVP,
+		)
 	case helpView:
 		content = helpVP
 	}

@@ -15,15 +15,15 @@ const (
 )
 
 var (
-	errUnexpectedTypeAfterUnmarshalling = errors.New("unexpected type found after unmarshalling JSON")
-	errMessageIDNil                     = errors.New("message ID is null")
-	errMessageBodyNil                   = errors.New("message body is null")
-	errCouldntUnmarshalBytes            = errors.New("couldn't unmarshal message body bytes as JSON")
-	errNestedObjectCouldntBeAccessed    = errors.New("nested object couln't be accessed")
-	errCouldntUnmarshalNestedObject     = errors.New("couldn't unmarshall nested object")
-	errCouldntMarshalNestedObject       = errors.New("couldn't marshall nested object")
-	errContextKeyNotFound               = errors.New("context key not found")
-	errContextValueIsNotAString         = errors.New("context value is not a string")
+	errMessageIDNil                = errors.New("message ID is null")
+	errMessageBodyNil              = errors.New("message body is null")
+	errCouldntUnmarshalBytes       = errors.New("couldn't unmarshal message body bytes as JSON")
+	errSubsetKeyNotFound           = errors.New("subset key not found in message body")
+	errCouldntUnmarshalSubsetValue = errors.New("couldn't unmarshal subset value")
+	errSubsetTypeIsUnsupported     = errors.New("subset type is unsupported")
+	errCouldntMarshalBytes         = errors.New("couldn't marshall nested object")
+	errContextKeyNotFound          = errors.New("context key not found in message body")
+	errContextValueTypeUnsupported = errors.New("context value type is unsupported")
 )
 
 type MessageFormat uint
@@ -98,22 +98,49 @@ type Message struct {
 	Body         string  `json:"body"`
 	ContextKey   *string `json:"context_key"`
 	ContextValue *string `json:"context_value"`
-	Err          error   `json:"error"`
+	Err          error   `json:"-"`
 }
 
-func (item Message) Title() string {
-	return fmt.Sprintf("%s: %s", utils.RightPadTrim("msgId", 12), item.ID)
+type SerializableMessage struct {
+	Message
+	Err *string `json:"error"`
 }
 
-func (item Message) Description() string {
-	if item.ContextKey != nil && item.ContextValue != nil {
-		return fmt.Sprintf("%s: %s", utils.RightPadTrim(*item.ContextKey, 12), *item.ContextValue)
+func (m Message) ToSerializable() SerializableMessage {
+	var err *string
+	if m.Err != nil {
+		errStr := m.Err.Error()
+		err = &errStr
 	}
+
+	return SerializableMessage{
+		Message: m,
+		Err:     err,
+	}
+}
+
+func (m Message) Title() string {
+	if m.Err != nil {
+		return "error"
+	}
+
+	return fmt.Sprintf("%s: %s", utils.RightPadTrim("message ID", 12), m.ID)
+}
+
+func (m Message) Description() string {
+	if m.Err != nil {
+		return ""
+	}
+
+	if m.ContextKey != nil && m.ContextValue != nil {
+		return fmt.Sprintf("%s: %s", utils.RightPadTrim(*m.ContextKey, 12), *m.ContextValue)
+	}
+
 	return ""
 }
 
-func (item Message) FilterValue() string {
-	return item.ID
+func (m Message) FilterValue() string {
+	return m.ID
 }
 
 func GetMessageData(message *sqstypes.Message, config Config) Message {
@@ -125,172 +152,172 @@ func GetMessageData(message *sqstypes.Message, config Config) Message {
 	}
 }
 
-// TODO: improve this
 func getJSONMessage(message *sqstypes.Message, subsetKey *string, contextKey *string) Message {
 	if message.MessageId == nil {
 		return Message{
 			Err: errMessageIDNil,
 		}
 	}
+	messageID := *message.MessageId
 	if message.Body == nil {
 		return Message{
 			Err: errMessageBodyNil,
 		}
 	}
+	messageBody := *message.Body
+	bodyBytes := []byte(messageBody)
 
 	var data map[string]any
-	messageID := *message.MessageId
-	bodyBytes := []byte(*message.Body)
 	err := json.Unmarshal(bodyBytes, &data)
 	if err != nil {
 		return Message{
-			Err: fmt.Errorf("%w: %s", errCouldntUnmarshalBytes, err.Error()),
+			Err: wrapErrWithDetails(fmt.Errorf("%w: %s", errCouldntUnmarshalBytes, err.Error()), messageID, bodyBytes),
 		}
 	}
 
 	if subsetKey == nil && contextKey == nil {
-		bytes, err := json.MarshalIndent(data, "", "  ")
-		if err != nil {
-			return Message{
-				Err: fmt.Errorf("%w: %s", errCouldntMarshalNestedObject, err.Error()),
-			}
-		}
-
-		return Message{
-			ID:   messageID,
-			Body: string(bytes),
-		}
+		return getJSONMessageWithNoSubsetAndContext(messageID, bodyBytes, data)
 	}
 
 	if subsetKey == nil && contextKey != nil {
-		context, ok := data[*contextKey]
-		if !ok {
-			return Message{
-				ContextKey: contextKey,
-				Err:        errContextKeyNotFound,
-			}
-		}
-
-		var contextValue string
-		switch c := context.(type) {
-		case string:
-			contextValue = c
-		default:
-			return Message{
-				ContextKey: contextKey,
-				Err:        fmt.Errorf("%w (key: %s): %v", errContextValueIsNotAString, *contextKey, context),
-			}
-		}
-
-		return Message{
-			ID:           messageID,
-			Body:         string(bodyBytes),
-			ContextKey:   contextKey,
-			ContextValue: &contextValue,
-		}
+		return getJSONMessageWithContextButNoSubset(messageID, bodyBytes, data, *contextKey)
 	}
 
 	if subsetKey != nil && contextKey == nil {
-		sKey := *subsetKey
-		subset, ok := data[sKey]
-		if !ok {
-			return Message{
-				Err: fmt.Errorf("%w (key: %s)", errNestedObjectCouldntBeAccessed, sKey),
-			}
-		}
-
-		var subsetData map[string]any
-		switch n := subset.(type) {
-		case map[string]any:
-			// It's a JSON object, directly access the nested key
-			subsetData = n
-		case string:
-			// May be stringified JSON; attempt to convert it to JSON
-			if err := json.Unmarshal([]byte(n), &subsetData); err != nil {
-				return Message{
-					Err: fmt.Errorf("%w (key: %s): %s", errCouldntUnmarshalNestedObject, sKey, err.Error()),
-				}
-			}
-		default:
-			return Message{
-				Err: fmt.Errorf("%w; data: %v", errUnexpectedTypeAfterUnmarshalling, subsetData),
-			}
-		}
-
-		subsetBytes, err := json.MarshalIndent(subsetData, "", "  ")
-		if err != nil {
-			return Message{
-				Err: fmt.Errorf("%w: %s", errCouldntMarshalNestedObject, err.Error()),
-			}
-		}
-
-		return Message{
-			ID:   messageID,
-			Body: string(subsetBytes),
-		}
+		return getJSONMessageWithSubsetButNoContext(messageID, bodyBytes, *subsetKey)
 	}
 
-	sKey := *subsetKey
-	subset, ok := data[sKey]
-	if !ok {
-		return Message{
-			ContextKey: contextKey,
-			Err:        fmt.Errorf("%w (key: %s)", errNestedObjectCouldntBeAccessed, sKey),
-		}
-	}
+	return getJSONMessageWithSubsetAndContext(messageID, bodyBytes, *subsetKey, *contextKey)
+}
 
-	var subsetData map[string]any
-	switch n := subset.(type) {
-	case map[string]any:
-		// It's a JSON object, directly access the nested key
-		subsetData = n
-	case string:
-		// May be stringified JSON; attempt to convert it to JSON
-		if err := json.Unmarshal([]byte(n), &subsetData); err != nil {
-			return Message{
-				ContextKey: contextKey,
-				Err:        fmt.Errorf("%w (key: %s): %s", errCouldntUnmarshalNestedObject, sKey, err.Error()),
-			}
-		}
-	default:
-		return Message{
-			ContextKey: contextKey,
-			Err:        fmt.Errorf("%w; data: %v", errUnexpectedTypeAfterUnmarshalling, subsetData),
-		}
-	}
-
-	subsetBytes, err := json.MarshalIndent(subsetData, "", "  ")
+func getJSONMessageWithNoSubsetAndContext(messageID string, bodyBytes []byte, data map[string]any) Message {
+	bytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return Message{
-			ContextKey: contextKey,
-			Err:        fmt.Errorf("%w: %s", errCouldntMarshalNestedObject, err.Error()),
-		}
-	}
-	context, ok := subsetData[*contextKey]
-	if !ok {
-		return Message{
-			ContextKey: contextKey,
-			Err:        errContextKeyNotFound,
+			Err: wrapErrWithDetails(fmt.Errorf("%w: %s", errCouldntMarshalBytes, err.Error()), messageID, bodyBytes),
 		}
 	}
 
-	var contextValue *string
-	switch c := context.(type) {
-	case string:
-		contextValue = &c
-	default:
+	return Message{
+		ID:   messageID,
+		Body: string(bytes),
+	}
+}
+
+func getJSONMessageWithContextButNoSubset(messageID string, bodyBytes []byte, data map[string]any, contextKey string) Message {
+	contextValue, err := getContextValue(data, contextKey)
+	if err != nil {
 		return Message{
-			ContextKey: contextKey,
-			Err:        fmt.Errorf("%w (key: %s): %v", errContextValueIsNotAString, *contextKey, context),
+			Err: wrapErrWithDetails(err, messageID, bodyBytes),
+		}
+	}
+
+	return Message{
+		ID:           messageID,
+		Body:         string(bodyBytes),
+		ContextKey:   &contextKey,
+		ContextValue: contextValue,
+	}
+}
+
+func getJSONMessageWithSubsetButNoContext(messageID string, bodyBytes []byte, subsetKey string) Message {
+	subset, err := getSubset(bodyBytes, subsetKey)
+	if err != nil {
+		return Message{
+			Err: wrapErrWithDetails(err, messageID, bodyBytes),
+		}
+	}
+
+	subsetBytes, err := json.MarshalIndent(subset, "", "  ")
+	if err != nil {
+		return Message{
+			Err: wrapErrWithDetails(fmt.Errorf("%w: %s", errCouldntMarshalBytes, err.Error()), messageID, bodyBytes),
+		}
+	}
+
+	return Message{
+		ID:   messageID,
+		Body: string(subsetBytes),
+	}
+}
+
+func getJSONMessageWithSubsetAndContext(messageID string, bodyBytes []byte, subsetKey, contextKey string) Message {
+	subset, err := getSubset(bodyBytes, subsetKey)
+	if err != nil {
+		return Message{
+			Err: wrapErrWithDetails(err, messageID, bodyBytes),
+		}
+	}
+	subsetBytes, err := json.MarshalIndent(subset, "", "  ")
+	if err != nil {
+		return Message{
+			Err: wrapErrWithDetails(fmt.Errorf("%w: %s", errCouldntMarshalBytes, err.Error()), messageID, bodyBytes),
+		}
+	}
+
+	contextValue, err := getContextValue(subset, contextKey)
+	if err != nil {
+		return Message{
+			Err: wrapErrWithDetails(err, messageID, bodyBytes),
 		}
 	}
 
 	return Message{
 		ID:           messageID,
 		Body:         string(subsetBytes),
-		ContextKey:   contextKey,
+		ContextKey:   &contextKey,
 		ContextValue: contextValue,
 	}
+}
+
+func getSubset(bodyBytes []byte, key string) (map[string]any, error) {
+	var data map[string]any
+	err := json.Unmarshal(bodyBytes, &data)
+	if err != nil {
+		return data, fmt.Errorf("%w: %s", errCouldntUnmarshalBytes, err.Error())
+	}
+
+	subset, ok := data[key]
+	if !ok {
+		return data, fmt.Errorf("%w (key: %q)", errSubsetKeyNotFound, key)
+	}
+
+	var subsetData map[string]any
+	switch s := subset.(type) {
+	case map[string]any:
+		// It's a JSON object, directly access the nested key
+		subsetData = s
+	case string:
+		// May be stringified JSON; attempt to convert it to JSON
+		if err := json.Unmarshal([]byte(s), &subsetData); err != nil {
+			return data, fmt.Errorf("%w (key: %q): %s", errCouldntUnmarshalSubsetValue, key, err.Error())
+		}
+	default:
+		return data, fmt.Errorf("%w (key: %q); subset needs to be an object or stringified JSON; determined type: %T", errSubsetTypeIsUnsupported, key, s)
+	}
+
+	return subsetData, nil
+}
+
+func getContextValue(data map[string]any, key string) (*string, error) {
+	var contextValue *string
+	context, ok := data[key]
+	if !ok {
+		return contextValue, errContextKeyNotFound
+	}
+
+	switch c := context.(type) {
+	case string:
+		contextValue = &c
+	case map[string]any:
+		return contextValue, fmt.Errorf("%w (key: %q); determined type: object; context value needs to be a string", errContextValueTypeUnsupported, key)
+	case []any:
+		return contextValue, fmt.Errorf("%w (key: %q); determined type: array; context value needs to be a string", errContextValueTypeUnsupported, key)
+	default:
+		return contextValue, fmt.Errorf("%w (key: %q); determined type: %T; context value needs to be a string", errContextValueTypeUnsupported, key, c)
+	}
+
+	return contextValue, nil
 }
 
 func getPlainMessage(message *sqstypes.Message) Message {
@@ -309,4 +336,8 @@ func getPlainMessage(message *sqstypes.Message) Message {
 		ID:   *message.MessageId,
 		Body: *message.Body,
 	}
+}
+
+func wrapErrWithDetails(err error, messageID string, bodyBytes []byte) error {
+	return fmt.Errorf("%w\n\n- message id: %s\n- message body:\n>>>\n%s\n<<<", err, messageID, string(bodyBytes))
 }

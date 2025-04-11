@@ -28,8 +28,8 @@ var HelpText = fmt.Sprintf(`
 	helpSectionStyle.Render(`
       <tab>                          Switch focus to next section
       <s-tab>                        Switch focus to previous section
-      1                              Maximize message value view
       ?                              Show help view
+      q                              Go back or quit
 `),
 	helpHeaderStyle.Render("Message List View"),
 	helpSectionStyle.Render(`
@@ -40,8 +40,6 @@ var HelpText = fmt.Sprintf(`
       }                              Fetch up to 100 more messages from the queue
       d                              Toggle deletion mode; cueitup will delete messages
                                          after reading them
-      <ctrl+s>                       Toggle contextual search prompt
-      <ctrl+f>                       Toggle contextual filtering ON/OFF
       <ctrl+p>                       Toggle queue message count polling ON/OFF; ON by default
       p                              Toggle persist mode (cueitup will start persisting
                                          messages, at the location
@@ -52,7 +50,6 @@ var HelpText = fmt.Sprintf(`
 `),
 	helpHeaderStyle.Render("Message Value View   "),
 	helpSectionStyle.Render(`
-      q                              Minimize section, and return focus to list view
       [,h                            Show details for the previous entry in the list
       ],l                            Show details for the next entry in the list
 `),

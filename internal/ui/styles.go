@@ -15,6 +15,7 @@ const (
 	deletingMsgsColor      = "#d3869b"
 	skippingColor          = "#fabd2f"
 	pollingColor           = "#928374"
+	errorColor             = "#fb4934"
 )
 
 var (
@@ -30,12 +31,7 @@ var (
 			Border(lipgloss.NormalBorder(), false, true, false, false).
 			BorderForeground(lipgloss.Color(listPaneBorderColor))
 
-	msgValueVPStyle   = baseListStyle.Width(150).PaddingLeft(3)
-	msgValueVPFSStyle = lipgloss.NewStyle().
-				PaddingTop(1).
-				PaddingRight(2).
-				PaddingLeft(1).
-				PaddingBottom(1)
+	msgValueVPStyle = baseListStyle.PaddingLeft(3)
 
 	helpVPStyle = lipgloss.NewStyle().
 			PaddingTop(1).
@@ -84,4 +80,7 @@ var (
 
 	helpSectionStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(helpSectionColor))
+
+	errorStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(errorColor))
 )

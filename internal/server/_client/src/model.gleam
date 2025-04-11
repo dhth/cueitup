@@ -2,18 +2,16 @@ import gleam/dict
 import gleam/list
 import gleam/option
 import lustre_http
-import types.{
-  type Behaviours, type Config, type MessageDetails, default_behaviours,
-}
+import types.{type Behaviours, type Config, type Message, default_behaviours}
 
 pub type Model {
   Model(
     config: option.Option(Config),
     behaviours: Behaviours,
-    messages: List(MessageDetails),
-    messages_cache: dict.Dict(Int, MessageDetails),
+    messages: List(Message),
+    messages_cache: dict.Dict(Int, Message),
     http_error: option.Option(lustre_http.HttpError),
-    current_message: option.Option(#(Int, MessageDetails)),
+    current_message: option.Option(#(Int, Message)),
     message_count: option.Option(Int),
     fetching: Bool,
     debug: Bool,
