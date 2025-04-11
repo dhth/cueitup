@@ -43,7 +43,7 @@ var HelpText = fmt.Sprintf(`
       M                              Toggle polling for message count in queue
       p                              Toggle persist mode (cueitup will start persisting
                                          messages, at the location
-                                         messages/<topic-name>/<timestamp-when-cueitup-started>/<unix-epoch>-<message-id>.md
+                                         messages/<topic-name>/<timestamp>-<message-id>.md
       s                              Toggle skipping mode; cueitup will consume messages,
                                          but not populate its internal list, effectively
                                          skipping over them

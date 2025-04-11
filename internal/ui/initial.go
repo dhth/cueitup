@@ -1,10 +1,9 @@
 package ui
 
 import (
-	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
@@ -23,9 +22,7 @@ func InitialModel(
 
 	queueParts := strings.Split(queueURL, "/")
 	queueName := queueParts[len(queueParts)-1]
-	currentTime := time.Now()
-	timeString := currentTime.Format("2006-01-02-15-04-05")
-	persistDir := fmt.Sprintf("messages/%s/%s", queueName, timeString)
+	persistDir := filepath.Join("messages", queueName)
 
 	var dbg bool
 	if len(os.Getenv("DEBUG")) > 0 {
