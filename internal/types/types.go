@@ -1,10 +1,9 @@
-package config
+package types
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/dhth/cueitup/internal/utils"
@@ -16,13 +15,6 @@ const (
 )
 
 var (
-	errIncorrectMessageFmtProvided      = errors.New("encoding format is incorrect")
-	errIncorrectQueueURLProvided        = errors.New("queue URL is incorrect")
-	errConfigSourceEmpty                = errors.New("config source is empty")
-	errContextKeyCannotBeUsed           = errors.New("context key can only be used when message format is JSON")
-	errSubsetKeyCannotBeUsed            = errors.New("subset key can only be used when message format is JSON")
-	errContextKeyEmpty                  = errors.New("context key is empty")
-	errSubsetKeyEmpty                   = errors.New("subset key is empty")
 	errUnexpectedTypeAfterUnmarshalling = errors.New("unexpected type found after unmarshalling JSON")
 	errMessageIDNil                     = errors.New("message ID is null")
 	errMessageBodyNil                   = errors.New("message body is null")
@@ -63,157 +55,6 @@ func (f MessageFormat) Extension() string {
 	}
 
 	return value
-}
-
-type Config struct {
-	ProfileName     string        `json:"profile_name"`
-	QueueURL        string        `json:"queue_url"`
-	AWSConfigSource string        `json:"aws_config_source"`
-	Format          MessageFormat `json:"-"`
-	ContextKey      *string       `json:"context_key"`
-	SubsetKey       *string       `json:"subset_key"`
-}
-
-func (p Config) Display() string {
-	var value string
-	switch p.Format {
-	case JSON:
-		value = fmt.Sprintf(`
-- name                    %s
-- queue URL               %s
-- config source           %s
-- format                  %v
-- context key             %v
-- subset key              %v
-        `,
-			p.ProfileName,
-			p.QueueURL,
-			p.AWSConfigSource,
-			p.Format.Display(),
-			p.ContextKey,
-			p.SubsetKey,
-		)
-	case None:
-		value = fmt.Sprintf(`
-- name                    %s
-- queue URL               %s
-- config source           %s
-- format                  %v
-        `,
-			p.ProfileName,
-			p.QueueURL,
-			p.AWSConfigSource,
-			p.Format.Display(),
-		)
-	}
-
-	return value
-}
-
-type CueitupConfig struct {
-	Profiles []ProfileConfig
-}
-
-type ProfileConfig struct {
-	Name            string  `yaml:"name"`
-	QueueURL        string  `yaml:"queue_url"`
-	AWSConfigSource string  `yaml:"aws_config_source"`
-	Format          string  `yaml:"format"`
-	ContextKey      *string `yaml:"context_key"`
-	SubsetKey       *string `yaml:"subset_key"`
-}
-
-func (pc *ProfileConfig) validateMessageFormat() (MessageFormat, error) {
-	switch pc.Format {
-	case typeJSON:
-		return JSON, nil
-	case typeNone:
-		return None, nil
-	default:
-		return JSON, fmt.Errorf("%w: %q; possible values: [%s, %s]", errIncorrectMessageFmtProvided, pc.Format, typeJSON, typeNone)
-	}
-}
-
-func (pc *ProfileConfig) validateQueueURL() error {
-	if strings.HasPrefix(pc.QueueURL, "https://") {
-		return nil
-	}
-
-	return fmt.Errorf("%w: %q", errIncorrectQueueURLProvided, pc.QueueURL)
-}
-
-func (pc *ProfileConfig) validateConfigSource() error {
-	if strings.TrimSpace(pc.AWSConfigSource) == "" {
-		return errConfigSourceEmpty
-	}
-
-	return nil
-}
-
-func (pc *ProfileConfig) validateContextKey(format MessageFormat) error {
-	if format != JSON && pc.ContextKey != nil {
-		return errContextKeyCannotBeUsed
-	}
-
-	if pc.ContextKey != nil && strings.TrimSpace(*pc.ContextKey) == "" {
-		return errContextKeyEmpty
-	}
-
-	return nil
-}
-
-func (pc *ProfileConfig) validateSubsetKey(format MessageFormat) error {
-	if format != JSON && pc.SubsetKey != nil {
-		return errSubsetKeyCannotBeUsed
-	}
-
-	if pc.SubsetKey != nil && strings.TrimSpace(*pc.SubsetKey) == "" {
-		return errSubsetKeyEmpty
-	}
-
-	return nil
-}
-
-func ParseProfileConfig(config ProfileConfig) (Config, []error) {
-	var errors []error
-
-	msgFmt, err := config.validateMessageFormat()
-	if err != nil {
-		errors = append(errors, err)
-	}
-
-	err = config.validateQueueURL()
-	if err != nil {
-		errors = append(errors, err)
-	}
-
-	err = config.validateConfigSource()
-	if err != nil {
-		errors = append(errors, err)
-	}
-
-	err = config.validateContextKey(msgFmt)
-	if err != nil {
-		errors = append(errors, err)
-	}
-
-	err = config.validateSubsetKey(msgFmt)
-	if err != nil {
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return Config{}, errors
-	}
-
-	return Config{
-		ProfileName:     config.Name,
-		QueueURL:        config.QueueURL,
-		AWSConfigSource: config.AWSConfigSource,
-		Format:          msgFmt,
-		ContextKey:      config.ContextKey,
-		SubsetKey:       config.SubsetKey,
-	}, nil
 }
 
 type TUIBehaviours struct {

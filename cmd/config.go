@@ -16,7 +16,7 @@ var (
 	errProfileConfigInvalid = errors.New("profile config is invalid")
 )
 
-func getProfile(configBytes []byte, profileName string) (t.Config, error) {
+func getConfig(configBytes []byte, profileName string) (t.Config, error) {
 	var cfg t.CueitupConfig
 	var zero t.Config
 
