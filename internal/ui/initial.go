@@ -33,17 +33,16 @@ func InitialModel(
 	}
 
 	m := Model{
-		sqsClient:            sqsClient,
-		queueURL:             queueURL,
-		config:               config,
-		behaviours:           behaviours,
-		pollForQueueMsgCount: true,
-		msgsList:             list.New(jobItems, appDelegate, listWidth, 0),
-		msgListCurrentIndex:  -1,
-		persistDir:           persistDir,
-		showHelpIndicator:    true,
-		debugMode:            dbg,
-		firstFetch:           true,
+		sqsClient:           sqsClient,
+		queueURL:            queueURL,
+		config:              config,
+		behaviours:          behaviours,
+		msgsList:            list.New(jobItems, appDelegate, listWidth, 0),
+		msgListCurrentIndex: -1,
+		persistDir:          persistDir,
+		showHelpIndicator:   true,
+		debugMode:           dbg,
+		firstFetch:          true,
 	}
 	m.msgsList.Title = "Messages"
 	m.msgsList.SetStatusBarItemName("message", "messages")

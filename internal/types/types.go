@@ -58,38 +58,41 @@ func (f MessageFormat) Extension() string {
 }
 
 type TUIBehaviours struct {
-	DeleteMessages  bool
-	PersistMessages bool
-	SkipMessages    bool
+	DeleteMessages   bool
+	PersistMessages  bool
+	ShowMessageCount bool
+	SkipMessages     bool
 }
 
 func (b TUIBehaviours) Display() string {
 	return fmt.Sprintf(`
 - delete messages         %v
 - persist messages        %v
+- show message count      %v
 - skip messages           %v
 `,
 		b.DeleteMessages,
 		b.PersistMessages,
+		b.ShowMessageCount,
 		b.SkipMessages,
 	)
 }
 
 type WebBehaviours struct {
-	DeleteMessages bool `json:"delete_messages"`
-	SelectOnHover  bool `json:"select_on_hover"`
-	ShowLiveCount  bool `json:"show_live_count"`
+	DeleteMessages   bool `json:"delete_messages"`
+	SelectOnHover    bool `json:"select_on_hover"`
+	ShowMessageCount bool `json:"show_message_count"`
 }
 
 func (b WebBehaviours) Display() string {
 	return fmt.Sprintf(`
 - delete messages         %v
 - select on hover         %v
-- show live count         %v
+- show message count      %v
 `,
 		b.DeleteMessages,
 		b.SelectOnHover,
-		b.ShowLiveCount,
+		b.ShowMessageCount,
 	)
 }
 

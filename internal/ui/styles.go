@@ -14,7 +14,6 @@ const (
 	persistingColor        = "#fb4934"
 	deletingMsgsColor      = "#d3869b"
 	skippingColor          = "#fabd2f"
-	pollingColor           = "#928374"
 	errorColor             = "#fb4934"
 )
 
@@ -24,19 +23,18 @@ var (
 			PaddingRight(1).
 			Foreground(lipgloss.Color(defaultForegroundColor))
 
-	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingLeft(1).PaddingBottom(1)
+	baseListStyle = lipgloss.NewStyle().PaddingTop(1).PaddingRight(2).PaddingBottom(1)
 
 	msgListStyle = baseListStyle.
 			Width(listWidth+5).
-			Border(lipgloss.NormalBorder(), false, true, false, false).
+			Border(lipgloss.ThickBorder(), false, true, false, false).
 			BorderForeground(lipgloss.Color(listPaneBorderColor))
 
-	msgValueVPStyle = baseListStyle.PaddingLeft(3)
+	msgValueVPStyle = baseListStyle.PaddingLeft(4)
 
 	helpVPStyle = lipgloss.NewStyle().
 			PaddingTop(1).
 			PaddingRight(2).
-			PaddingLeft(1).
 			PaddingBottom(1)
 
 	modeStyle = baseStyle.
@@ -60,10 +58,6 @@ var (
 	skippingStyle = baseStyle.
 			Bold(true).
 			Foreground(lipgloss.Color(skippingColor))
-
-	pollingMsgStyle = baseStyle.
-			Bold(true).
-			Foreground(lipgloss.Color(pollingColor))
 
 	helpMsgStyle = baseStyle.
 			Bold(true).

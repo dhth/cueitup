@@ -40,7 +40,7 @@ var HelpText = fmt.Sprintf(`
       }                              Fetch up to 100 more messages from the queue
       d                              Toggle deletion mode; cueitup will delete messages
                                          after reading them
-      <ctrl+p>                       Toggle queue message count polling ON/OFF; ON by default
+      M                              Toggle polling for message count in queue
       p                              Toggle persist mode (cueitup will start persisting
                                          messages, at the location
                                          messages/<topic-name>/<timestamp-when-cueitup-started>/<unix-epoch>-<message-id>.md

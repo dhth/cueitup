@@ -355,10 +355,10 @@ fn controls_div_with_config(
             ),
             attribute.id("show-live-count"),
             attribute.type_("checkbox"),
-            event.on_check(types.ShowLiveCountChanged),
-            attribute.checked(model.behaviours.show_live_count),
+            event.on_check(types.ShowMessageCountChanged),
+            attribute.checked(model.behaviours.show_message_count),
           ]),
-          case model.message_count, model.behaviours.show_live_count {
+          case model.message_count, model.behaviours.show_message_count {
             option.Some(c), True ->
               html.p([], [
                 element.text(

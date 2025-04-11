@@ -4327,11 +4327,11 @@ var Config = class extends CustomType {
   }
 };
 var Behaviours = class extends CustomType {
-  constructor(delete_messages, select_on_hover, show_live_count) {
+  constructor(delete_messages, select_on_hover, show_message_count) {
     super();
     this.delete_messages = delete_messages;
     this.select_on_hover = select_on_hover;
-    this.show_live_count = show_live_count;
+    this.show_message_count = show_message_count;
   }
 };
 var Message = class extends CustomType {
@@ -4382,7 +4382,7 @@ var DeleteSettingsChanged = class extends CustomType {
     this[0] = x0;
   }
 };
-var ShowLiveCountChanged = class extends CustomType {
+var ShowMessageCountChanged = class extends CustomType {
   constructor(x0) {
     super();
     this[0] = x0;
@@ -4466,14 +4466,14 @@ function behaviours_decoder() {
         bool2,
         (select_on_hover) => {
           return field2(
-            "show_live_count",
+            "show_message_count",
             bool2,
-            (show_live_count) => {
+            (show_message_count) => {
               return success(
                 new Behaviours(
                   delete_messages,
                   select_on_hover,
-                  show_live_count
+                  show_message_count
                 )
               );
             }
@@ -4680,7 +4680,7 @@ function update(model, msg) {
       return [model, none()];
     } else {
       let b = res[0];
-      let $ = b.show_live_count;
+      let $ = b.show_message_count;
       if (!$) {
         return [
           (() => {
@@ -4793,7 +4793,7 @@ function update(model, msg) {
             return new Behaviours(
               _record$1.delete_messages,
               selected,
-              _record$1.show_live_count
+              _record$1.show_message_count
             );
           })(),
           _record.messages,
@@ -4819,7 +4819,7 @@ function update(model, msg) {
             return new Behaviours(
               selected,
               _record$1.select_on_hover,
-              _record$1.show_live_count
+              _record$1.show_message_count
             );
           })(),
           _record.messages,
@@ -4833,7 +4833,7 @@ function update(model, msg) {
       })(),
       none()
     ];
-  } else if (msg instanceof ShowLiveCountChanged) {
+  } else if (msg instanceof ShowMessageCountChanged) {
     let selected = msg[0];
     if (!selected) {
       return [
@@ -5016,7 +5016,7 @@ function update(model, msg) {
       ];
     }
   } else {
-    let $ = model.behaviours.show_live_count;
+    let $ = model.behaviours.show_message_count;
     if (!$) {
       return [model, none()];
     } else {
@@ -5580,15 +5580,15 @@ function controls_div_with_config(model, config) {
                   type_("checkbox"),
                   on_check(
                     (var0) => {
-                      return new ShowLiveCountChanged(var0);
+                      return new ShowMessageCountChanged(var0);
                     }
                   ),
-                  checked(model.behaviours.show_live_count)
+                  checked(model.behaviours.show_message_count)
                 ])
               ),
               (() => {
                 let $ = model.message_count;
-                let $1 = model.behaviours.show_live_count;
+                let $1 = model.behaviours.show_message_count;
                 if ($ instanceof Some && $1) {
                   let c = $[0];
                   return p(
