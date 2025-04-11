@@ -21,27 +21,26 @@ const (
 const msgCountTickInterval = time.Second * 3
 
 type Model struct {
-	sqsClient            *sqs.Client
-	queueURL             string
-	config               t.Config
-	behaviours           t.TUIBehaviours
-	activeView           stateView
-	lastView             stateView
-	pollForQueueMsgCount bool
-	msgsList             list.Model
-	msgListCurrentIndex  int
-	helpVP               viewport.Model
-	showHelpIndicator    bool
-	msgValueVP           viewport.Model
-	persistDir           string
-	msgValueVPReady      bool
-	helpVPReady          bool
-	terminalWidth        int
-	terminalHeight       int
-	message              string
-	errorMsg             string
-	debugMode            bool
-	firstFetch           bool
+	sqsClient           *sqs.Client
+	queueURL            string
+	config              t.Config
+	behaviours          t.TUIBehaviours
+	activeView          stateView
+	lastView            stateView
+	msgsList            list.Model
+	msgListCurrentIndex int
+	helpVP              viewport.Model
+	showHelpIndicator   bool
+	msgValueVP          viewport.Model
+	persistDir          string
+	msgValueVPReady     bool
+	helpVPReady         bool
+	terminalWidth       int
+	terminalHeight      int
+	message             string
+	errorMsg            string
+	debugMode           bool
+	firstFetch          bool
 }
 
 func (m Model) Init() tea.Cmd {

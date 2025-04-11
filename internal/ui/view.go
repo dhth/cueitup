@@ -7,7 +7,7 @@ import (
 	"github.com/dhth/cueitup/internal/utils"
 )
 
-var listWidth = 54
+var listWidth = 52
 
 func (m Model) View() string {
 	var content string
@@ -34,10 +34,6 @@ func (m Model) View() string {
 		mode += " " + deletingMsgsStyle.Render("not deleting msgs!")
 	} else {
 		mode += " " + deletingMsgsStyle.Render("deleting msgs!")
-	}
-
-	if !m.pollForQueueMsgCount {
-		mode += " " + pollingMsgStyle.Render("not polling for msg count!")
 	}
 
 	if m.behaviours.PersistMessages {

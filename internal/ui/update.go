@@ -72,14 +72,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activeView == msgValueView {
 				m.msgsList.CursorDown()
 			}
-		case "ctrl+p":
-			m.pollForQueueMsgCount = !m.pollForQueueMsgCount
-			if m.pollForQueueMsgCount {
+		case "M":
+			m.behaviours.ShowMessageCount = !m.behaviours.ShowMessageCount
+			if m.behaviours.ShowMessageCount {
 				cmds = append(cmds,
 					tea.Batch(GetQueueMsgCount(m.sqsClient, m.queueURL),
 						tickEvery(msgCountTickInterval),
 					),
 				)
+			} else {
+				m.msgsList.Title = "Messages"
 			}
 		case "ctrl+r":
 			if m.activeView == msgsListView {
@@ -163,10 +165,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case MsgCountTickMsg:
 		cmds = append(cmds, GetQueueMsgCount(m.sqsClient, m.queueURL))
-		if m.pollForQueueMsgCount {
+		if m.behaviours.ShowMessageCount {
 			cmds = append(cmds, tickEvery(msgCountTickInterval))
 		}
 	case QueueMsgCountFetchedMsg:
+		if !m.behaviours.ShowMessageCount {
+			break
+		}
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {

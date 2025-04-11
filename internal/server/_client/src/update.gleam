@@ -19,7 +19,7 @@ pub fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
       case res {
         Error(_) -> #(model, effect.none())
         Ok(b) ->
-          case b.show_live_count {
+          case b.show_message_count {
             False -> #(Model(..model, behaviours: b), effect.none())
             True -> #(
               Model(..model, behaviours: b),
@@ -65,7 +65,7 @@ pub fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
       ),
       effect.none(),
     )
-    types.ShowLiveCountChanged(selected) ->
+    types.ShowMessageCountChanged(selected) ->
       case selected {
         False -> #(
           Model(
@@ -73,7 +73,7 @@ pub fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
             message_count: option.None,
             behaviours: Behaviours(
               ..model.behaviours,
-              show_live_count: selected,
+              show_message_count: selected,
             ),
           ),
           effect.none(),
@@ -83,7 +83,7 @@ pub fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
             ..model,
             behaviours: Behaviours(
               ..model.behaviours,
-              show_live_count: selected,
+              show_message_count: selected,
             ),
           ),
           effect.batch([
@@ -136,7 +136,7 @@ pub fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
         )
       }
     types.Tick ->
-      case model.behaviours.show_live_count {
+      case model.behaviours.show_message_count {
         False -> #(model, effect.none())
         True -> #(
           model,

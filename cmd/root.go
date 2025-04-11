@@ -37,17 +37,17 @@ func Execute() error {
 
 func NewRootCommand() (*cobra.Command, error) {
 	var (
-		configPath      string
-		configPathFull  string
-		homeDir         string
-		cfg             t.Config
-		deleteMessages  bool
-		persistMessages bool
-		skipMessages    bool
-		selectOnHover   bool
-		showLiveCount   bool
-		webOpen         bool
-		debug           bool
+		configPath       string
+		configPathFull   string
+		homeDir          string
+		cfg              t.Config
+		deleteMessages   bool
+		persistMessages  bool
+		skipMessages     bool
+		selectOnHover    bool
+		showMessageCount bool
+		webOpen          bool
+		debug            bool
 	)
 
 	rootCmd := &cobra.Command{
@@ -84,9 +84,10 @@ own details related to authentication, deserialization, etc.
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			behaviours := t.TUIBehaviours{
-				DeleteMessages:  deleteMessages,
-				PersistMessages: persistMessages,
-				SkipMessages:    skipMessages,
+				DeleteMessages:   deleteMessages,
+				PersistMessages:  persistMessages,
+				SkipMessages:     skipMessages,
+				ShowMessageCount: showMessageCount,
 			}
 
 			if debug {
@@ -123,9 +124,9 @@ Behaviours
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			behaviours := t.WebBehaviours{
-				DeleteMessages: deleteMessages,
-				SelectOnHover:  selectOnHover,
-				ShowLiveCount:  showLiveCount,
+				DeleteMessages:   deleteMessages,
+				SelectOnHover:    selectOnHover,
+				ShowMessageCount: showMessageCount,
 			}
 
 			if debug {
@@ -173,11 +174,12 @@ Behaviours
 	tuiCmd.Flags().BoolVarP(&deleteMessages, "delete-messages", "D", true, "whether to start the TUI with the setting \"delete messages\" ON")
 	tuiCmd.Flags().BoolVarP(&persistMessages, "persist-messages", "P", false, "whether to start the TUI with the setting \"persist messages\" ON")
 	tuiCmd.Flags().BoolVarP(&skipMessages, "skip-messages", "S", false, "whether to start the TUI with the setting \"skip messages\" ON")
+	tuiCmd.Flags().BoolVarP(&showMessageCount, "show-message-count", "M", true, "whether to start the TUI with the setting \"show message count\" ON")
 
 	serveCmd.Flags().StringVarP(&configPath, "config-path", "c", defaultConfigPath, "location of cueitup's config file")
 	serveCmd.Flags().BoolVarP(&deleteMessages, "delete-messages", "D", true, "whether to start the web interface with the setting \"delete messages\" ON")
 	serveCmd.Flags().BoolVarP(&selectOnHover, "select-on-hover", "S", false, "whether to start the web interface with the setting \"select on hover\" ON")
-	serveCmd.Flags().BoolVarP(&showLiveCount, "show-live-count", "L", false, "whether to start the web interface with the setting \"show live count\" ON")
+	serveCmd.Flags().BoolVarP(&showMessageCount, "show-message-count", "M", true, "whether to start the web interface with the setting \"show message count\" ON")
 	serveCmd.Flags().BoolVarP(&webOpen, "open", "o", false, "whether to open web interface in browser automatically")
 	serveCmd.Flags().BoolVarP(&debug, "debug", "d", false, "whether to only display config picked up by cueitup")
 
