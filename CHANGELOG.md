@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Show error (if any) in message details pane
+- Change path for persisting messages
 
 ### Removed
 

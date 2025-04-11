@@ -5553,9 +5553,9 @@ function controls_div_with_config(model, config) {
                   label(
                     toList([
                       class$("cursor-pointer"),
-                      for$("show-live-count")
+                      for$("show-message-count")
                     ]),
-                    toList([text("live count")])
+                    toList([text("message count")])
                   ),
                   div(
                     toList([
@@ -5576,7 +5576,7 @@ function controls_div_with_config(model, config) {
                   class$(
                     "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer"
                   ),
-                  id("show-live-count"),
+                  id("show-message-count"),
                   type_("checkbox"),
                   on_check(
                     (var0) => {

@@ -336,9 +336,9 @@ fn controls_div_with_config(
             html.label(
               [
                 attribute.class("cursor-pointer"),
-                attribute.for("show-live-count"),
+                attribute.for("show-message-count"),
               ],
-              [element.text("live count")],
+              [element.text("message count")],
             ),
             html.div(
               [
@@ -353,7 +353,7 @@ fn controls_div_with_config(
             attribute.class(
               "w-4 h-4 text-[#fabd2f] bg-[#282828] focus:ring-[#fabd2f] cursor-pointer",
             ),
-            attribute.id("show-live-count"),
+            attribute.id("show-message-count"),
             attribute.type_("checkbox"),
             event.on_check(types.ShowMessageCountChanged),
             attribute.checked(model.behaviours.show_message_count),

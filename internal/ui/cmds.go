@@ -96,7 +96,8 @@ func GetQueueMsgCount(client *sqs.Client, queueURL string) tea.Cmd {
 
 func saveMessageToDisk(id string, value string, format t.MessageFormat, dir string) tea.Cmd {
 	return func() tea.Msg {
-		fileName := fmt.Sprintf("%s.%s", id, format.Extension())
+		now := time.Now().Unix()
+		fileName := fmt.Sprintf("%d-%s.%s", now, id, format.Extension())
 		fp := filepath.Join(dir, fileName)
 		dir := filepath.Dir(fp)
 		err := os.MkdirAll(dir, 0o755)
