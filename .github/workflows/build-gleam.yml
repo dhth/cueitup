@@ -1,0 +1,32 @@
+name: build-gleam
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    paths:
+      - "internal/server/_client/*"
+      - ".github/workflows/build-gleam.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27.1.2"
+          gleam-version: "1.9.1"
+          rebar3-version: "3"
+      - name: Compile gleam to js
+        run: |
+          cd internal/server/_client
+          gleam deps download
+          gleam run -m lustre/dev build app
+      - name: Ensure compiled files haven't changed
+        run: |
+          if git --no-pager diff --name-only | grep -q "priv/static"; then
+            echo "compiled files have changed; compile them again"
+            git --no-pager diff --name-only
+            false
+          fi

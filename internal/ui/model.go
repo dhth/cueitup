@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	t "github.com/dhth/cueitup/internal/types"
@@ -17,7 +16,6 @@ const (
 	msgsListView stateView = iota
 	msgValueView
 	helpView
-	contextualSearchView
 )
 
 const msgCountTickInterval = time.Second * 3
@@ -31,17 +29,13 @@ type Model struct {
 	lastView             stateView
 	pollForQueueMsgCount bool
 	msgsList             list.Model
+	msgListCurrentIndex  int
 	helpVP               viewport.Model
 	showHelpIndicator    bool
 	msgValueVP           viewport.Model
-	recordValueStore     map[string]string
-	contextSearchInput   textinput.Model
-	contextSearchValues  []string
-	filterMessages       bool
 	persistDir           string
 	msgValueVPReady      bool
 	helpVPReady          bool
-	vpFullScreen         bool
 	terminalWidth        int
 	terminalHeight       int
 	message              string

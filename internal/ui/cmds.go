@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -111,23 +110,6 @@ func saveMessageToDisk(id string, value string, format t.MessageFormat, dir stri
 		}
 
 		return RecordSavedToDiskMsg{path: fp}
-	}
-}
-
-func setContextSearchValues(userInput string) tea.Cmd {
-	return func() tea.Msg {
-		valuesEls := strings.Split(userInput, ",")
-		var values []string
-		for _, v := range valuesEls {
-			values = append(values, strings.TrimSpace(v))
-		}
-		return ContextSearchValuesSetMsg{values}
-	}
-}
-
-func showItemDetails(key string) tea.Cmd {
-	return func() tea.Msg {
-		return MsgChosenMsg{key}
 	}
 }
 

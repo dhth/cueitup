@@ -20,16 +20,6 @@ const (
 	unexpected      = "something unexpected happened (let @dhth know about this via https://github.com/dhth/cueitup/issues)"
 )
 
-type KafkaMessage struct {
-	Key       string  `json:"key"`
-	Offset    int64   `json:"offset"`
-	Partition int32   `json:"partition"`
-	Metadata  string  `json:"metadata"`
-	Value     *string `json:"value"`
-	Tombstone bool    `json:"tombstone"`
-	Err       error   `json:"error"`
-}
-
 type MessageCount struct {
 	Count int `json:"count"`
 }
@@ -75,9 +65,9 @@ func getMessages(client *sqs.Client, config t.Config) func(w http.ResponseWriter
 			return
 		}
 
-		messages := make([]t.Message, len(result.Messages))
+		messages := make([]t.SerializableMessage, len(result.Messages))
 		for i, message := range result.Messages {
-			messages[i] = t.GetMessageData(&message, config)
+			messages[i] = t.GetMessageData(&message, config).ToSerializable()
 		}
 
 		if deleteMessages && len(messages) > 0 {

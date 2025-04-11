@@ -7,7 +7,7 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import model.{type Model}
-import types.{type Config, type MessageDetails, type Msg}
+import types.{type Config, type Message, type Msg}
 import utils.{http_error_to_string}
 
 const profile_name_max_width = 60
@@ -129,7 +129,7 @@ fn messages_section_with_messages(
 }
 
 fn message_list_item(
-  message: MessageDetails,
+  message: Message,
   index: Int,
   current_index: option.Option(Int),
   select_on_hover: Bool,
@@ -155,7 +155,10 @@ fn message_list_item(
     ],
     [
       html.p([attribute.class("text-base font-semibold")], [
-        html.text(message.id),
+        html.text(case message.error {
+          option.None -> message.id
+          option.Some(_) -> "error"
+        }),
       ]),
       case message.context_key, message.context_value {
         option.Some(k), option.Some(v) ->
@@ -182,9 +185,16 @@ fn message_details_pane(model: Model) -> element.Element(Msg) {
       ])
     option.Some(#(_, msg)) ->
       html.div([], [
-        html.pre([attribute.class("text-[#d5c4a1] text-base mb-4")], [
-          html.text(msg.body),
-        ]),
+        case msg.error {
+          option.None ->
+            html.pre([attribute.class("text-[#d5c4a1] text-base mb-4")], [
+              html.text(msg.body),
+            ])
+          option.Some(e) ->
+            html.pre([attribute.class("text-[#fb4934] text-base mb-4")], [
+              html.text(e),
+            ])
+        },
       ])
   }
 

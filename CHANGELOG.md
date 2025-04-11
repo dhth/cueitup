@@ -13,4 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add web interface
 - Allow multiple sources for AWS config
 
+### Changed
+
+- Show error (if any) in message details pane
+
+### Removed
+
+- Ability to filter for messages with a specific context value
+
 [unreleased]: https://github.com/dhth/cueitup/compare/v0.2.2...HEAD

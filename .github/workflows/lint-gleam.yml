@@ -1,32 +1,15 @@
-name: lint
+name: lint-gleam
 
 on:
   push:
     branches: ["main"]
   pull_request:
     paths:
-      - "go.*"
-      - "**/*.go"
-      - ".github/workflows/lint.yml"
-
-env:
-  GO_VERSION: '1.24.2'
+      - "internal/server/_client/*"
+      - ".github/workflows/lint-gleam.yml"
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.0
-
-  lint-gleam:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

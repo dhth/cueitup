@@ -4334,7 +4334,7 @@ var Behaviours = class extends CustomType {
     this.show_live_count = show_live_count;
   }
 };
-var MessageDetails = class extends CustomType {
+var Message = class extends CustomType {
   constructor(id2, body2, context_key, context_value, error) {
     super();
     this.id = id2;
@@ -4505,13 +4505,7 @@ function message_details_decoder() {
                     optional(string3),
                     (error) => {
                       return success(
-                        new MessageDetails(
-                          id2,
-                          body2,
-                          context_key,
-                          context_value,
-                          error
-                        )
+                        new Message(id2, body2, context_key, context_value, error)
                       );
                     }
                   );
@@ -5196,7 +5190,18 @@ function message_list_item(message, index5, current_index, select_on_hover) {
     toList([
       p(
         toList([class$("text-base font-semibold")]),
-        toList([text2(message.id)])
+        toList([
+          text2(
+            (() => {
+              let $ = message.error;
+              if ($ instanceof None) {
+                return message.id;
+              } else {
+                return "error";
+              }
+            })()
+          )
+        ])
       ),
       (() => {
         let $ = message.context_key;
@@ -5239,10 +5244,21 @@ function message_details_pane(model) {
       return div(
         toList([]),
         toList([
-          pre(
-            toList([class$("text-[#d5c4a1] text-base mb-4")]),
-            toList([text2(msg.body)])
-          )
+          (() => {
+            let $1 = msg.error;
+            if ($1 instanceof None) {
+              return pre(
+                toList([class$("text-[#d5c4a1] text-base mb-4")]),
+                toList([text2(msg.body)])
+              );
+            } else {
+              let e = $1[0];
+              return pre(
+                toList([class$("text-[#fb4934] text-base mb-4")]),
+                toList([text2(e)])
+              );
+            }
+          })()
         ])
       );
     }

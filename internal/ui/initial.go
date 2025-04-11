@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 	t "github.com/dhth/cueitup/internal/types"
 )
@@ -28,14 +27,6 @@ func InitialModel(
 	timeString := currentTime.Format("2006-01-02-15-04-05")
 	persistDir := fmt.Sprintf("messages/%s/%s", queueName, timeString)
 
-	ti := textinput.New()
-	if config.ContextKey != nil {
-		ti.Prompt = fmt.Sprintf("Filter messages where %s in > ", *config.ContextKey)
-	}
-	ti.Focus()
-	ti.CharLimit = 100
-	ti.Width = 100
-
 	var dbg bool
 	if len(os.Getenv("DEBUG")) > 0 {
 		dbg = true
@@ -48,9 +39,8 @@ func InitialModel(
 		behaviours:           behaviours,
 		pollForQueueMsgCount: true,
 		msgsList:             list.New(jobItems, appDelegate, listWidth, 0),
-		recordValueStore:     make(map[string]string),
+		msgListCurrentIndex:  -1,
 		persistDir:           persistDir,
-		contextSearchInput:   ti,
 		showHelpIndicator:    true,
 		debugMode:            dbg,
 		firstFetch:           true,
