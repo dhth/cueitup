@@ -235,5 +235,5 @@ func parseConfigSource(value string) (ConfigSource, error) {
 		}, nil
 	}
 
-	return zero, errIncorrectConfigSource
+	return zero, fmt.Errorf(`%w; possible values: "env", "profile:<aws-shared-config-profile-name>", "assume:<arn-of-role-to-assume>"`, errIncorrectConfigSource)
 }
