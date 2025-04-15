@@ -22,4 +22,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: go test
+        env:
+          INTEGRATION: '1'
         run: go test -v ./...

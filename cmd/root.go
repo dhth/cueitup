@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/dhth/cueitup/internal/aws"
@@ -20,6 +21,7 @@ const (
 )
 
 var (
+	errConfigFileNotYAML       = errors.New("config needs to be a YAML file")
 	errCouldntLoadAWSConfig    = errors.New("couldn't load AWS config")
 	errCouldntGetUserHomeDir   = errors.New("couldn't get your home directory")
 	errCouldntGetUserConfigDir = errors.New("couldn't get your config directory")
@@ -39,8 +41,8 @@ func NewRootCommand() (*cobra.Command, error) {
 	var (
 		configPath       string
 		configPathFull   string
+		configBytes      []byte
 		homeDir          string
-		cfg              t.Config
 		deleteMessages   bool
 		persistMessages  bool
 		skipMessages     bool
@@ -48,6 +50,7 @@ func NewRootCommand() (*cobra.Command, error) {
 		showMessageCount bool
 		webOpen          bool
 		debug            bool
+		listConfig       bool
 	)
 
 	rootCmd := &cobra.Command{
@@ -59,20 +62,46 @@ cueitup relies on a configuration file that contains profiles for various SQS to
 own details related to authentication, deserialization, etc.
 `,
 		SilenceUsage: true,
-		PersistentPreRunE: func(_ *cobra.Command, args []string) error {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			if !strings.HasSuffix(configPath, ".yml") && !strings.HasSuffix(configPath, ".yaml") {
+				return errConfigFileNotYAML
+			}
+
+			var err error
 			configPathFull = utils.ExpandTilde(configPath, homeDir)
-			configBytes, err := os.ReadFile(configPathFull)
+			configBytes, err = os.ReadFile(configPathFull)
 			if err != nil {
 				return fmt.Errorf("%w: %w", ErrCouldntReadConfigFile, err)
 			}
 
-			cfg, err = getConfig(configBytes, args[0])
-			if errors.Is(err, errProfileNotFound) {
-				return err
-			} else if err != nil {
-				return err
+			return nil
+		},
+	}
+
+	configCmd := &cobra.Command{
+		Use:          "config",
+		Short:        "interact with cueitup's config",
+		SilenceUsage: true,
+	}
+
+	validateConfigCmd := &cobra.Command{
+		Use:          "validate",
+		Short:        "validate cueitup's config",
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			if listConfig {
+				fmt.Printf("%s\n---\n\n", configBytes)
+			}
+			errors := validateConfig(configBytes)
+			if len(errors) > 0 {
+				fmt.Println("config has some errors:")
+				for _, err := range errors {
+					fmt.Printf("- %s\n", err.Error())
+				}
+				return nil
 			}
 
+			fmt.Println("config looks good ✅")
 			return nil
 		},
 	}
@@ -82,7 +111,12 @@ own details related to authentication, deserialization, etc.
 		Short:        "open cueitup's TUI",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
+			cfg, err := getConfig(configBytes, args[0])
+			if err != nil {
+				return err
+			}
+
 			behaviours := t.TUIBehaviours{
 				DeleteMessages:   deleteMessages,
 				PersistMessages:  persistMessages,
@@ -122,7 +156,12 @@ Behaviours
 		Short:        "open cueitup's web interface",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
+			cfg, err := getConfig(configBytes, args[0])
+			if err != nil {
+				return err
+			}
+
 			behaviours := t.WebBehaviours{
 				DeleteMessages:   deleteMessages,
 				SelectOnHover:    selectOnHover,
@@ -169,7 +208,8 @@ Behaviours
 
 	defaultConfigPath := filepath.Join(configDir, configFileName)
 
-	tuiCmd.Flags().StringVarP(&configPath, "config-path", "c", defaultConfigPath, "location of cueitup's config file")
+	rootCmd.PersistentFlags().StringVarP(&configPath, "config-path", "c", defaultConfigPath, "location of cueitup's config file")
+
 	tuiCmd.Flags().BoolVarP(&debug, "debug", "d", false, "whether to only display config picked up by cueitup")
 	tuiCmd.Flags().BoolVarP(&deleteMessages, "delete-messages", "D", true, "whether to start the TUI with the setting \"delete messages\" ON")
 	tuiCmd.Flags().BoolVarP(&persistMessages, "persist-messages", "P", false, "whether to start the TUI with the setting \"persist messages\" ON")
@@ -183,6 +223,10 @@ Behaviours
 	serveCmd.Flags().BoolVarP(&webOpen, "open", "o", false, "whether to open web interface in browser automatically")
 	serveCmd.Flags().BoolVarP(&debug, "debug", "d", false, "whether to only display config picked up by cueitup")
 
+	validateConfigCmd.Flags().BoolVarP(&listConfig, "list", "l", false, "whether to list the config as well")
+	configCmd.AddCommand(validateConfigCmd)
+
+	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(tuiCmd)
 	rootCmd.AddCommand(serveCmd)
 

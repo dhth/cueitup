@@ -52,3 +52,33 @@ func getConfig(configBytes []byte, profileName string) (t.Config, error) {
 
 	return zero, fmt.Errorf("%w; available profiles: %v", errProfileNotFound, availableProfiles)
 }
+
+func validateConfig(configBytes []byte) []error {
+	var cfg t.CueitupConfig
+
+	err := yaml.Unmarshal(configBytes, &cfg)
+	if err != nil {
+		return []error{fmt.Errorf("%w: %s", errCouldntParseConfig, err.Error())}
+	}
+
+	if len(cfg.Profiles) == 0 {
+		return []error{errNoProfilesDefined}
+	}
+
+	var errors []error
+
+	availableProfiles := make([]string, len(cfg.Profiles))
+	for i, pc := range cfg.Profiles {
+		availableProfiles[i] = pc.Name
+		_, profileErrors := t.ParseProfileConfig(pc)
+		if len(profileErrors) > 0 {
+			errorStrs := make([]string, len(profileErrors))
+			for i, err := range profileErrors {
+				errorStrs[i] = fmt.Sprintf("  - %s", err.Error())
+			}
+			errors = append(errors, fmt.Errorf("%w at index %d (starting at zero)\n%s", errProfileConfigInvalid, i, strings.Join(errorStrs, "\n")))
+		}
+	}
+
+	return errors
+}

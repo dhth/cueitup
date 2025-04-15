@@ -33,6 +33,7 @@ func (cs ConfigSource) MarshalJSON() ([]byte, error) {
 }
 
 var (
+	errProfileNameEmpty            = errors.New("profile name is empty")
 	errIncorrectMessageFmtProvided = errors.New("encoding format is incorrect")
 	errIncorrectQueueURLProvided   = errors.New("queue URL is incorrect")
 	errConfigSourceEmpty           = errors.New("config source is empty")
@@ -114,6 +115,15 @@ type ProfileConfig struct {
 	SubsetKey       *string `yaml:"subset_key"`
 }
 
+func (pc *ProfileConfig) validateProfileName() (string, error) {
+	var zero string
+	if len(strings.TrimSpace(pc.Name)) == 0 {
+		return zero, errProfileNameEmpty
+	}
+
+	return strings.TrimSpace(pc.Name), nil
+}
+
 func (pc *ProfileConfig) validateMessageFormat() (MessageFormat, error) {
 	switch pc.Format {
 	case typeJSON:
@@ -130,7 +140,7 @@ func (pc *ProfileConfig) validateQueueURL() error {
 		return nil
 	}
 
-	return fmt.Errorf("%w: %q", errIncorrectQueueURLProvided, pc.QueueURL)
+	return fmt.Errorf("%w (%q): needs to be a proper URL", errIncorrectQueueURLProvided, pc.QueueURL)
 }
 
 func (pc *ProfileConfig) validateContextKey(format MessageFormat) error {
@@ -159,6 +169,11 @@ func (pc *ProfileConfig) validateSubsetKey(format MessageFormat) error {
 
 func ParseProfileConfig(config ProfileConfig) (Config, []error) {
 	var errors []error
+
+	profileName, err := config.validateProfileName()
+	if err != nil {
+		errors = append(errors, err)
+	}
 
 	msgFmt, err := config.validateMessageFormat()
 	if err != nil {
@@ -190,7 +205,7 @@ func ParseProfileConfig(config ProfileConfig) (Config, []error) {
 	}
 
 	return Config{
-		ProfileName:     config.Name,
+		ProfileName:     profileName,
 		QueueURL:        config.QueueURL,
 		AWSConfigSource: cfgSrc,
 		Format:          msgFmt,
