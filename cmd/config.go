@@ -76,7 +76,7 @@ func validateConfig(configBytes []byte) []error {
 			for i, err := range profileErrors {
 				errorStrs[i] = fmt.Sprintf("  - %s", err.Error())
 			}
-			errors = append(errors, fmt.Errorf("%w at index %d (starting at zero)\n%s", errProfileConfigInvalid, i, strings.Join(errorStrs, "\n")))
+			errors = append(errors, fmt.Errorf("%w at index %d\n%s", errProfileConfigInvalid, i+1, strings.Join(errorStrs, "\n")))
 		}
 	}
 

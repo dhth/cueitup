@@ -114,7 +114,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.msgValueVPReady {
 			m.msgValueVP = viewport.New(msg.Width-2-w-w2-listWidth, m.terminalHeight-12)
-			m.msgValueVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.msgValueVPReady = true
 		} else {
 			m.msgValueVP.Width = msg.Width - 2 - w - w2 - listWidth
@@ -123,7 +122,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if !m.helpVPReady {
 			m.helpVP = viewport.New(msg.Width-1, msg.Height-7)
-			m.helpVP.HighPerformanceRendering = useHighPerformanceRenderer
 			m.helpVP.SetContent(HelpText)
 			m.helpVPReady = true
 		} else {

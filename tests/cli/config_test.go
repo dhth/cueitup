@@ -58,13 +58,13 @@ func TestCLI(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, "exit status 1", err.Error())
 		expected := `config has some errors:
-- profile config is invalid at index 0 (starting at zero)
+- profile config is invalid at index 1
   - profile name is empty
   - queue URL is incorrect ("sqs.eu-central-1.amazonaws.com/000000000000/queue-a"): needs to be a proper URL
-- profile config is invalid at index 1 (starting at zero)
+- profile config is invalid at index 2
   - encoding format is incorrect: "unknown"; possible values: [json, none]
   - incorrect config source provided; possible values: "env", "profile:<aws-shared-config-profile-name>", "assume:<arn-of-role-to-assume>"
-- profile config is invalid at index 2 (starting at zero)
+- profile config is invalid at index 3
   - context key is empty
   - subset key is empty
 `
