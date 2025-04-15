@@ -16,12 +16,11 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: "27.1.2"
-          gleam-version: "1.9.1"
+          gleam-version: "1.10.0"
           rebar3-version: "3"
       - name: Compile gleam to js
         run: |
           cd internal/server/_client
-          gleam deps download
           gleam run -m lustre/dev build app
       - name: Ensure compiled files haven't changed
         run: |

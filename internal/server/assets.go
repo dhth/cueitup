@@ -19,6 +19,9 @@ var indexHTMLBytes []byte
 //go:embed _client/priv/static/cueitup.css
 var cssBytes []byte
 
+//go:embed _client/priv/static/custom.css
+var customCSSBytes []byte
+
 //go:embed _client/priv/static/favicon.png
 var faviconBytes []byte
 
@@ -42,6 +45,13 @@ func getFavicon(w http.ResponseWriter, _ *http.Request) {
 func getCSS(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set(contentType, contentTypeCSS)
 	if _, err := w.Write(cssBytes); err != nil {
+		log.Printf("failed to write bytes to HTTP connection: %s", err.Error())
+	}
+}
+
+func getCustomCSS(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set(contentType, contentTypeCSS)
+	if _, err := w.Write(customCSSBytes); err != nil {
 		log.Printf("failed to write bytes to HTTP connection: %s", err.Error())
 	}
 }

@@ -1,0 +1,17 @@
+profiles:
+  - name:
+    queue_url: sqs.eu-central-1.amazonaws.com/000000000000/queue-a
+    aws_config_source: "profile:local-profile"
+    format: json
+
+  - name: profile-b
+    queue_url: https://sqs.eu-central-1.amazonaws.com/000000000000/queue-b
+    aws_config_source: something
+    format: unknown
+
+  - name: profile-c
+    queue_url: https://sqs.eu-central-1.amazonaws.com/000000000000/queue-c
+    aws_config_source: env
+    format: json
+    subset_key: ""
+    context_key: ""

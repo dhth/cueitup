@@ -30,6 +30,7 @@ func Serve(
 	mux.HandleFunc("GET /", getIndex)
 	mux.HandleFunc("GET /priv/static/favicon.png", getFavicon)
 	mux.HandleFunc("GET /priv/static/cueitup.css", getCSS)
+	mux.HandleFunc("GET /priv/static/custom.css", getCustomCSS)
 	mux.HandleFunc("GET /priv/static/cueitup.mjs", getJS)
 	mux.HandleFunc("GET /api/config", getConfig(config))
 	mux.HandleFunc("GET /api/behaviours", getBehaviours(initialBehaviours))
@@ -79,6 +80,7 @@ func Serve(
 
 	select {
 	case <-sigChan:
+		signal.Stop(sigChan)
 		shutDownCtx, shutDownRelease := context.WithTimeout(context.Background(), time.Second*3)
 		defer shutDownRelease()
 
