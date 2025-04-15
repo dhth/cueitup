@@ -98,7 +98,8 @@ own details related to authentication, deserialization, etc.
 				for _, err := range errors {
 					fmt.Printf("- %s\n", err.Error())
 				}
-				return nil
+				// nolint:revive
+				os.Exit(1)
 			}
 
 			fmt.Println("config looks good ✅")

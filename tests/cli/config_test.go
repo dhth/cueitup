@@ -55,7 +55,8 @@ func TestCLI(t *testing.T) {
 		outputBytes, err := c.CombinedOutput()
 
 		// THEN
-		require.NoError(t, err, "output:\n%s", outputBytes)
+		require.Error(t, err)
+		require.Equal(t, "exit status 1", err.Error())
 		expected := `config has some errors:
 - profile config is invalid at index 0 (starting at zero)
   - profile name is empty
