@@ -38,8 +38,9 @@ the authenticity of released artifacts [here](#-verifying-release-artifacts).
 🛠️ Configuration
 ---
 
-Create a configuration file that looks like the following. The location of this
-file depends on your operating system, and can be determined by running `cueitup
+Create a YAML configuration file that looks like the following. The location of
+this file depends on your operating system, and can be determined by running
+`cueitup
 -h`.
 
 ```yaml
@@ -88,7 +89,7 @@ Usage:
   cueitup tui <PROFILE> [flags]
 
 Flags:
-  -c, --config-path string   location of cueitup's config file (default "/Users/dhruvthakur/Library/Application Support/cueitup/cueitup.yml")
+  -c, --config-path string   location of cueitup's config file (default "/Users/user/Library/Application Support/cueitup/cueitup.yml")
   -d, --debug                whether to only display config picked up by cueitup
   -D, --delete-messages      whether to start the TUI with the setting "delete messages" ON (default true)
   -h, --help                 help for tui
@@ -100,13 +101,15 @@ Flags:
 <video src="https://github.com/user-attachments/assets/738a5797-89f8-4717-9639-3a0fe72715d8"></video>
 
 ```text
+$ cueitup serve --help
+
 open cueitup's web interface
 
 Usage:
   cueitup serve <PROFILE> [flags]
 
 Flags:
-  -c, --config-path string   location of cueitup's config file (default "/Users/dhruvthakur/Library/Application Support/cueitup/cueitup.yml")
+  -c, --config-path string   location of cueitup's config file (default "/Users/user/Library/Application Support/cueitup/cueitup.yml")
   -d, --debug                whether to only display config picked up by cueitup
   -D, --delete-messages      whether to start the web interface with the setting "delete messages" ON (default true)
   -h, --help                 help for serve
@@ -212,9 +215,10 @@ TUI Keyboard shortcuts
 🔐 Verifying release artifacts
 ---
 
-In case you get the `cueitup` binary directly from a [release][4], you may want to
-verify its authenticity. Checksums are applied to all released artifacts, and
-the resulting checksum file is signed using
+In case you get the `cueitup` binary directly from a
+[release](https://github.com/dhth/cueitup/releases), you may want to verify its
+authenticity. Checksums are applied to all released artifacts, and the resulting
+checksum file is signed using
 [cosign](https://docs.sigstore.dev/cosign/installation/).
 
 Steps to verify (replace `A.B.C` in the commands listed below with the version
