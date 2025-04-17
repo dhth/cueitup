@@ -8,12 +8,12 @@
 </p>
 
 `cueitup` lets you inspect messages in an AWS SQS queue in a simple and
-deliberate manner. It was built to simplify the process of investigating the
-contents of messages being pushed to an SNS topic. You can pull one or more
-messages on demand, peruse through them in a list, and, if needed, persist them
-to your local filesystem.
+deliberate manner. You can pull one or more messages on demand, peruse through
+them in a list, and, if needed, persist them to your local filesystem. `cueitup`
+offers both a terminal UI and a web interface.
 
 ![tui](https://github.com/user-attachments/assets/c1727615-46c1-483c-9e08-ffdb9c9e1fb6)
+
 ![web interface](https://github.com/user-attachments/assets/848592e1-0e24-4eb0-a3c0-db12b4d34116)
 
 Install
