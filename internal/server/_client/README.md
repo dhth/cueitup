@@ -3,7 +3,7 @@
 Local Development
 ---
 
-Prequisites
+Prerequisites
 
 - gleam
 
