@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">cueitup</h1>
   <p align="center">
-    <a href="https://github.com/dhth/cueitup/actions/workflows/build.yml"><img alt="GitHub release" src="https://img.shields.io/github/actions/workflow/status/dhth/cueitup/build.yml?style=flat-square"></a>
+    <a href="https://github.com/dhth/cueitup/actions/workflows/main.yml"><img alt="GitHub release" src="https://img.shields.io/github/actions/workflow/status/dhth/cueitup/main.yml?style=flat-square"></a>
     <a href="https://github.com/dhth/cueitup/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/release/dhth/cueitup.svg?style=flat-square"></a>
     <a href="https://github.com/dhth/cueitup/releases"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/dhth/cueitup/latest?style=flat-square"></a>
   </p>
