@@ -41,6 +41,7 @@ jobs:
               - ".github/workflows/main.yml"
             release:
               - ".goreleaser.yaml"
+              - ".github/workflows/main.yml"
             workflows:
               - ".github/workflows/**.yml"
             yml:
@@ -170,5 +171,5 @@ jobs:
       - name: Release check
         uses: goreleaser/goreleaser-action@v6
         with:
-          version: '~> v2'
+          version: 'v2.9.0'
           args: check
