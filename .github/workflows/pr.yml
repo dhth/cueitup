@@ -4,8 +4,8 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: '1.24.2'
-  GLEAM_VERSION: '1.10.0'
+  GO_VERSION: '1.24.4'
+  GLEAM_VERSION: '1.11.1'
 
 jobs:
   changes:
