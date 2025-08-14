@@ -4,7 +4,7 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: '1.24.4'
+  GO_VERSION: '1.25.0'
   GLEAM_VERSION: '1.11.1'
 
 jobs:
@@ -64,7 +64,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1
+          version: v2.4.0
 
   lint-gleam:
     needs: changes
