@@ -2,9 +2,8 @@ name: scan
 
 on:
   workflow_dispatch:
-  pull_request:
   schedule:
-    - cron: '0 8 10 * *'
+    - cron: '0 10 10 * *'
 
 jobs:
   virus-total:
