@@ -3,7 +3,7 @@ module github.com/dhth/cueitup
 go 1.25.0
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.38.0
+	github.com/aws/aws-sdk-go-v2 v1.38.1
 	github.com/aws/aws-sdk-go-v2/config v1.31.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.41.0
 	github.com/charmbracelet/bubbles v0.21.0
