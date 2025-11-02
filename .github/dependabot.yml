@@ -8,6 +8,10 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "build"
+    groups:
+      aws-sdk:
+        patterns:
+          - "github.com/aws/aws-sdk-go-v2/*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
