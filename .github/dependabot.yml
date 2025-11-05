@@ -4,14 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      patch-updates:
+        update-types: ["patch"]
+      minor-updates:
+        update-types: ["minor"]
     labels:
       - "dependencies"
     commit-message:
       prefix: "build"
-    groups:
-      aws-sdk:
-        patterns:
-          - "github.com/aws/aws-sdk-go-v2/*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
