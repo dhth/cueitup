@@ -224,8 +224,8 @@ func parseConfigSource(value string) (ConfigSource, error) {
 		return ConfigSource{Env, "env"}, nil
 	}
 
-	if strings.HasPrefix(value, cfgSrcSharedProfilePrefix) {
-		value := strings.TrimPrefix(value, cfgSrcSharedProfilePrefix)
+	if after, ok := strings.CutPrefix(value, cfgSrcSharedProfilePrefix); ok {
+		value := after
 		if strings.TrimSpace(value) == "" {
 			return zero, errConfigSourceEmpty
 		}
